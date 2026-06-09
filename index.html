@@ -772,16 +772,29 @@ async function driveUpload(img,parentId){
 
 /* ---------- publish ---------- */
 const publishModal=document.getElementById('publishModal');
-document.getElementById('publishBtn').onclick=()=>{
-  const items=imgsFor(state.sel); const unpub=items.filter(i=>!i.driveId).length;
-  document.getElementById('publishDesc').innerHTML=`Uploads <b>${items.length}</b> image${items.length!==1?'s':''} from <b>${currentTitle().replace(/<[^>]+>/g,'')}</b> into your Google Drive — a top folder named after the dealership, with a sub-folder per brand. ${unpub} not yet on Drive. (Tip: select <b>All Banners</b> to publish everything at once.)`;
+let _publishItems=null;
+document.getElementById('publishBtn').onclick=(e)=>{
+  e.stopPropagation();
+  const view=imgsFor(state.sel).filter(i=>!i.driveId);
+  const all=state.cache.filter(i=>!i.driveId);
+  const done=state.cache.filter(i=>i.driveId).length;
+  const here=currentTitle().replace(/<[^>]+>/g,'');
+  popMenu([
+    {label:`This view (${here}) — ${view.length} to upload`, fn:()=>openPublish(imgsFor(state.sel), here)},
+    {label:`Everything — ${all.length} to upload${done?` · ${done} already on Drive`:''}`, fn:()=>openPublish(state.cache, 'everything: all brands, backgrounds & badges')}
+  ], e.clientX||1300, e.clientY||40);
+};
+function openPublish(items, label){
+  _publishItems=items;
+  const todo=items.filter(i=>!i.driveId);
+  document.getElementById('publishDesc').innerHTML=`Uploads <b>${todo.length}</b> image${todo.length!==1?'s':''} (${label}) into your Google Drive — a folder named after the dealership, with a sub-folder per brand (plus Backgrounds & Sales Event Banners). Anything already on Drive is skipped.`;
   document.getElementById('prog').classList.remove('show'); document.getElementById('progBar').style.width="0";
   publishModal.classList.add('open');
-};
+}
 document.getElementById('publishCancel').onclick=()=>publishModal.classList.remove('open');
 document.getElementById('publishGo').onclick=()=>ensureAuth(doPublish);
 async function doPublish(){
-  const items=imgsFor(state.sel); const todo=items.filter(i=>!i.driveId);
+  const items=_publishItems||imgsFor(state.sel); const todo=items.filter(i=>!i.driveId);
   if(!todo.length){toast('Everything here is already on Drive');publishModal.classList.remove('open');return;}
   const prog=document.getElementById('prog'),bar=document.getElementById('progBar'),desc=document.getElementById('publishDesc');
   prog.classList.add('show'); document.getElementById('publishGo').disabled=true;
