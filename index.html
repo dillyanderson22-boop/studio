@@ -228,7 +228,8 @@
 
 <script>
 /* ============ Studio v2 — dealership-grouped library ============ */
-const CATEGORY_FOLDERS = ["Backgrounds","Sales Event Banners","Seasonal Banners","Offer Badges"];
+const CATEGORY_FOLDERS = ["Backgrounds","Sales Event Banners"];
+const REMOVED_DEFAULTS = ["Seasonal Banners","Offer Badges"]; // retired categories
 const CAR_BRANDS = [
   ["Acura"],["Alfa Romeo"],["Aston Martin"],["Audi"],["Bentley"],["BMW"],["Buick"],
   ["Cadillac"],["Chevrolet","Chevy"],["Chrysler"],["Dodge"],["Ferrari"],["Fiat"],["Ford"],
@@ -294,6 +295,8 @@ function render(){renderTree();renderGrid();}
 async function reloadImages(){
   try{ state.cache = await Promise.race([ dbAll(), new Promise((_,r)=>setTimeout(()=>r(new Error('db timeout')),4000)) ]); }
   catch(e){ console.warn('image load skipped:',e.message); }
+  // move any images that lived in retired folders back to their dealership (unsorted)
+  state.cache.forEach(i=>{ if(i.folder && REMOVED_DEFAULTS.includes(i.folder)){ i.folder=null; dbPut(i).catch(()=>{}); } });
   render();
 }
 // refresh = render the tree/grid instantly from localStorage, then refresh image data in the background.
@@ -580,6 +583,10 @@ async function doPublish(){
 /* ---------- init ---------- */
 (async function(){
   state.dealers=loadDealers(); state.sel=loadSel();
+  // migrate: strip retired category folders from existing dealerships
+  let migrated=false;
+  state.dealers.forEach(d=>{ const before=d.folders.length; d.folders=d.folders.filter(f=>!REMOVED_DEFAULTS.includes(f)); if(d.folders.length!==before) migrated=true; });
+  if(migrated) saveDealers();
   render();          // show dealerships/folders instantly from saved settings
   reloadImages();    // load image thumbnails in the background (never blocks the UI)
   let tries=0; const iv=setInterval(()=>{if(window.google&&google.accounts){initTokenClient();clearInterval(iv);}if(++tries>40)clearInterval(iv);},150);
