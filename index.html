@@ -189,6 +189,18 @@
   </div>
 </div>
 
+<!-- Confirm modal -->
+<div class="overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="confirmCancel">Cancel</button>
+      <button class="btn primary" id="confirmOk" style="background:#b00020;border-color:#b00020">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div class="overlay" id="settingsModal">
   <div class="modal">
@@ -329,7 +341,7 @@ function renderTree(){
     head.ondragleave=()=>head.classList.remove('drop');
     head.ondrop=async e=>{e.preventDefault();head.classList.remove('drop');const id=e.dataTransfer.getData('imgid');
       if(id){const im=await dbGet(id);if(im){im.dealerId=d.id;im.folder=null;await dbPut(im);toast('Moved to '+d.name);refresh();}}};
-    head.querySelector('[data-dmenu]').onclick=(e)=>{e.stopPropagation();dealerOptions(d);};
+    head.querySelector('[data-dmenu]').onclick=(e)=>{e.stopPropagation();dealerOptions(d,e);};
     tree.appendChild(head);
 
     if(!d.collapsed){
@@ -343,7 +355,7 @@ function renderTree(){
         fr.ondragleave=()=>fr.classList.remove('drop');
         fr.ondrop=async e=>{e.preventDefault();fr.classList.remove('drop');const id=e.dataTransfer.getData('imgid');
           if(id){const im=await dbGet(id);if(im){im.dealerId=d.id;im.folder=f;await dbPut(im);toast('Moved to '+f);refresh();}}};
-        fr.querySelector('[data-fmenu]').onclick=(e)=>{e.stopPropagation();folderOptions(d,f);};
+        fr.querySelector('[data-fmenu]').onclick=(e)=>{e.stopPropagation();folderOptions(d,f,e);};
         tree.appendChild(fr);
       });
       const addF=document.createElement('div'); addF.className="row folder-row"; addF.style.color="var(--ink-2)";
@@ -407,8 +419,10 @@ function renderGrid(){
     dots.onclick=e=>{e.stopPropagation();document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open'));menu.classList.toggle('open');};
     menu.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const t=JSON.parse(b.dataset.move);img.dealerId=t.d;img.folder=t.f;await dbPut(img);toast('Moved');refresh();});
     menu.querySelector('[data-act="download"]').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=img.name;a.click();};
-    menu.querySelector('[data-act="rename"]').onclick=async()=>{const n=prompt("Rename banner",img.name);if(n){img.name=n;await dbPut(img);refresh();}};
-    menu.querySelector('[data-act="delete"]').onclick=async()=>{if(confirm("Delete this banner?")){await dbDelete(img.id);toast('Deleted');refresh();}};
+    menu.querySelector('[data-act="rename"]').onclick=()=>askName('Rename banner','Name',img.name,(v)=>{img.name=v;const c=state.cache.find(x=>x.id===img.id);if(c)c.name=v;render();dbPut(img).catch(()=>{});});
+    menu.querySelector('[data-act="delete"]').onclick=()=>askConfirm('Delete banner','Delete this banner? This cannot be undone.','Delete',()=>{
+      state.cache=state.cache.filter(x=>x.id!==img.id); render(); toast('Deleted'); dbDelete(img.id).catch(()=>{});
+    });
     grid.appendChild(card);
   });
 }
@@ -446,35 +460,53 @@ document.getElementById('nameCancel').onclick=()=>{nameModal.classList.remove('o
 document.getElementById('nameSave').onclick=()=>{const v=document.getElementById('nameInput').value.trim();if(v&&nameCb)nameCb(v);nameModal.classList.remove('open');nameCb=null;};
 document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('nameSave').click();});
 
-function newFolder(d){ askName("New folder","Folder name","",(v)=>{ if(!d.folders.includes(v)){d.folders.push(v);saveDealers();refresh();} }); }
-function dealerOptions(d){
-  const ch=prompt(`Dealership "${d.name}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
-  if(!ch) return;
-  if(ch.toLowerCase().startsWith('ren')) askName("Rename dealership","Name",d.name,(v)=>{d.name=v;saveDealers();refresh();});
-  else if(ch.toLowerCase().startsWith('del')){
-    if(confirm(`Delete "${d.name}"? Its images move to Unsorted.`)){
-      dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id){im.dealerId=null;im.folder=null;await dbPut(im);}}
-        state.dealers=state.dealers.filter(x=>x.id!==d.id);saveDealers();
-        if(state.sel.dealerId===d.id)state.sel={scope:'all'};saveSel();refresh();});
-    }
-  }
+/* ---------- in-app confirm (replaces native confirm) ---------- */
+const confirmModal=document.getElementById('confirmModal');
+let confirmCb=null;
+function askConfirm(title,msg,okLabel,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmOk').textContent=okLabel||'Confirm';
+  confirmCb=cb; confirmModal.classList.add('open');
 }
-function folderOptions(d,f){
-  const ch=prompt(`Folder "${f}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
-  if(!ch) return;
-  if(ch.toLowerCase().startsWith('ren')) askName("Rename folder","Folder name",f,(v)=>{
-    const i=d.folders.indexOf(f);if(i>=0)d.folders[i]=v;
-    dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id&&im.folder===f){im.folder=v;await dbPut(im);}}
+document.getElementById('confirmCancel').onclick=()=>{confirmModal.classList.remove('open');confirmCb=null;};
+document.getElementById('confirmOk').onclick=()=>{const cb=confirmCb;confirmModal.classList.remove('open');confirmCb=null;if(cb)cb();};
+
+/* ---------- floating dropdown for sidebar ⋯ menus ---------- */
+function popMenu(items,x,y){
+  document.querySelectorAll('.popmenu').forEach(m=>m.remove());
+  const m=document.createElement('div'); m.className='menu popmenu open';
+  m.style.position='fixed'; m.style.left=x+'px'; m.style.top=y+'px'; m.style.right='auto';
+  items.forEach(it=>{const b=document.createElement('button');b.textContent=it.label;if(it.danger)b.className='danger';b.onclick=(e)=>{e.stopPropagation();m.remove();it.fn();};m.appendChild(b);});
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('click',function h(){m.remove();document.removeEventListener('click',h);}),0);
+}
+
+function newFolder(d){ askName("New folder","Folder name","",(v)=>{ if(!d.folders.includes(v)){d.folders.push(v);saveDealers();refresh();} }); }
+function dealerOptions(d,ev){
+  popMenu([
+    {label:'Rename', fn:()=>askName("Rename dealership","Name",d.name,(v)=>{d.name=v;saveDealers();refresh();})},
+    {label:'Delete dealership', danger:true, fn:()=>askConfirm("Delete dealership",`Delete “${d.name}”? Its images move to Unsorted.`,'Delete',()=>{
+      state.cache.forEach(im=>{if(im.dealerId===d.id){im.dealerId=null;im.folder=null;dbPut(im).catch(()=>{});}});
+      state.dealers=state.dealers.filter(x=>x.id!==d.id);saveDealers();
+      if(state.sel.dealerId===d.id)state.sel={scope:'all'};saveSel();render();
+    })}
+  ], ev.clientX, ev.clientY);
+}
+function folderOptions(d,f,ev){
+  popMenu([
+    {label:'Rename', fn:()=>askName("Rename folder","Folder name",f,(v)=>{
+      const i=d.folders.indexOf(f);if(i>=0)d.folders[i]=v;
+      state.cache.forEach(im=>{if(im.dealerId===d.id&&im.folder===f){im.folder=v;dbPut(im).catch(()=>{});}});
       if(state.sel.scope==='folder'&&state.sel.dealerId===d.id&&state.sel.folder===f)state.sel.folder=v;
-      saveDealers();saveSel();refresh();});
-  });
-  else if(ch.toLowerCase().startsWith('del')){
-    if(confirm(`Delete folder "${f}"? Images inside move to this dealership's unsorted.`)){
-      dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id&&im.folder===f){im.folder=null;await dbPut(im);}}
-        d.folders=d.folders.filter(x=>x!==f);saveDealers();
-        if(state.sel.scope==='folder'&&state.sel.folder===f)state.sel={scope:'dealer',dealerId:d.id};saveSel();refresh();});
-    }
-  }
+      saveDealers();saveSel();render();
+    })},
+    {label:'Delete folder', danger:true, fn:()=>askConfirm("Delete folder",`Delete “${f}”? Images move to ${d.name} (unsorted).`,'Delete',()=>{
+      state.cache.forEach(im=>{if(im.dealerId===d.id&&im.folder===f){im.folder=null;dbPut(im).catch(()=>{});}});
+      d.folders=d.folders.filter(x=>x!==f);saveDealers();
+      if(state.sel.scope==='folder'&&state.sel.folder===f)state.sel={scope:'dealer',dealerId:d.id};saveSel();render();
+    })}
+  ], ev.clientX, ev.clientY);
 }
 
 /* ---------- add dealership (brand detection) ---------- */
