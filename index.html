@@ -111,6 +111,9 @@
   .prog i{display:block;height:100%;background:var(--ink);width:0;transition:.2s}
   .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
   @keyframes spin{to{transform:rotate(360deg)}}
+  #bgStatus{position:fixed;bottom:22px;right:22px;display:none;align-items:center;background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 16px;border-radius:10px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  #bgStatus.show{display:flex}
+  #bgStatus .spin{border-color:rgba(255,255,255,.3);border-top-color:#fff}
 </style>
 </head>
 <body>
@@ -147,6 +150,9 @@
       <h1 id="title">All Banners</h1>
       <span class="meta" id="meta"></span>
       <div class="spacer" style="flex:1"></div>
+      <button class="btn" id="rembgBtn" title="Remove background from all images in this view">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 3h18v18H3z" opacity="0"/><path d="M4 4l16 16M21 8a4 4 0 0 0-4-4M8 21a4 4 0 0 1-4-4M9 9l6 6"/><circle cx="9" cy="9" r="0"/></svg> Remove BG
+      </button>
       <button class="btn" id="uploadBtn">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg> Upload
       </button>
@@ -259,6 +265,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="bgStatus"></div>
 
 <script>
 /* ============ Studio v2 — dealership-grouped library ============ */
@@ -436,11 +443,12 @@ function renderGrid(){
     html+=`<button data-move='${JSON.stringify({d:null,f:null})}'>Unsorted</button>`;
     state.dealers.forEach(d=>{ html+=`<div class="lbl">${esc(d.name)}</div>`;
       d.folders.forEach(f=>{ html+=`<button data-move='${JSON.stringify({d:d.id,f})}'>${esc(f)}</button>`; }); });
-    html+='<div class="sep"></div><button data-act="download">Download</button><button data-act="rename">Rename</button><button class="danger" data-act="delete">Delete</button>';
+    html+='<div class="sep"></div><button data-act="rembg">'+(img.noBg?'Re-remove background':'Remove background')+'</button><button data-act="download">Download</button><button data-act="rename">Rename</button><button class="danger" data-act="delete">Delete</button>';
     menu.innerHTML=html;
     dots.onclick=e=>{e.stopPropagation();document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open'));menu.classList.toggle('open');};
     menu.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const t=JSON.parse(b.dataset.move);img.dealerId=t.d;img.folder=t.f;await dbPut(img);toast('Moved');refresh();});
     menu.querySelector('[data-act="download"]').onclick=()=>{const a=document.createElement('a');a.href=img.fullUrl||url;if(img.blob)a.download=img.name;else a.target='_blank';a.click();};
+    menu.querySelector('[data-act="rembg"]').onclick=()=>removeBgOne(img);
     menu.querySelector('[data-act="rename"]').onclick=()=>askName('Rename banner','Name',img.name,(v)=>{img.name=v;const c=state.cache.find(x=>x.id===img.id);if(c)c.name=v;render();dbPut(img).catch(()=>{});});
     menu.querySelector('[data-act="delete"]').onclick=()=>askConfirm('Delete banner','Delete this banner? This cannot be undone.','Delete',()=>{
       state.cache=state.cache.filter(x=>x.id!==img.id); render(); toast('Deleted'); dbDelete(img.id).catch(()=>{});
@@ -468,6 +476,38 @@ const dz=document.getElementById('dropzone');
 ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hot');}));
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hot');}));
 dz.addEventListener('drop',e=>{ if(e.dataTransfer.files.length) ingest(e.dataTransfer.files); });
+
+/* ---------- background removal (runs on-device, free) ---------- */
+let _rembg=null;
+async function getRembg(){ if(!_rembg){ const m=await import('https://esm.sh/@imgly/background-removal@1.5.5'); _rembg=m.removeBackground; } return _rembg; }
+function bgStatus(txt){ const el=document.getElementById('bgStatus'); if(txt===null){el.classList.remove('show');return;} el.classList.add('show'); el.innerHTML='<span class="spin"></span>'+txt; }
+async function removeBgFor(img){
+  const fn=await getRembg();
+  const out=await fn(img.blob || img.imgUrl || img.fullUrl);   // transparent PNG blob
+  if(!img.origUrl) img.origUrl=img.fullUrl||img.imgUrl||null;   // keep original reference
+  img.blob=out; img.type='image/png'; img.imgUrl=null; img.noBg=true; img.driveId=null; // re-publish needed
+  await dbPut(img);
+}
+async function removeBgOne(img){
+  bgStatus('Removing background…');
+  try{ await removeBgFor(img); toast('Background removed'); }
+  catch(e){ console.error(e); toast('Removal failed — try again'); }
+  bgStatus(null); render();
+}
+document.getElementById('rembgBtn').onclick=()=>{
+  const items=imgsFor(state.sel).filter(i=>!i.noBg);
+  if(!items.length){ toast('Nothing here needs background removal'); return; }
+  askConfirm('Remove backgrounds', `Remove the background from ${items.length} image${items.length!==1?'s':''} in “${currentTitle().replace(/<[^>]+>/g,'')}”? This runs on your device (~2–5s each), so big folders take a while. You can keep using the app meanwhile.`, 'Remove all', ()=>runRembgBatch(items));
+};
+async function runRembgBatch(items){
+  let ok=0, fail=0;
+  for(const img of items){
+    bgStatus(`Removing backgrounds… ${ok}/${items.length}`);
+    try{ await removeBgFor(img); ok++; if(ok%4===0) render(); }
+    catch(e){ console.warn('rembg fail',e); fail++; }
+  }
+  bgStatus(null); render(); toast('Removed background on '+ok+(fail?' ('+fail+' failed)':'')+' ✓');
+}
 
 /* ---------- generic name modal ---------- */
 const nameModal=document.getElementById('nameModal');
