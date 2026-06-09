@@ -413,14 +413,18 @@ document.addEventListener('click',()=>document.querySelectorAll('.menu.open').fo
 
 /* ---------- upload ---------- */
 async function ingest(files){
-  const t=uploadTarget(); let n=0;
-  for(const file of files){ if(!file.type.startsWith('image/')) continue;
-    await dbPut({id:uid(),name:file.name,dealerId:t.dealerId,folder:t.folder,blob:file,type:file.type,createdAt:Date.now(),driveId:null}); n++; }
-  if(n){toast(n+" image"+(n>1?"s":"")+" added to "+t.label);refresh();} else toast("No images found");
+  const t=uploadTarget();
+  const list=Array.from(files||[]).filter(f=>f && f.type && f.type.startsWith('image/'));
+  if(!list.length){ toast("No images found"); return; }
+  const added=list.map(file=>({id:uid(),name:file.name,dealerId:t.dealerId,folder:t.folder,blob:file,type:file.type,createdAt:Date.now(),driveId:null}));
+  // show ALL of them immediately, then persist in the background (never blocks on the DB)
+  state.cache=state.cache.concat(added); render();
+  toast(added.length+" image"+(added.length>1?"s":"")+" added to "+t.label);
+  for(const rec of added){ try{ await dbPut(rec); }catch(e){ console.warn('save failed for',rec.name,e); } }
 }
 const fileInput=document.getElementById('fileInput');
 document.getElementById('uploadBtn').onclick=()=>fileInput.click();
-fileInput.onchange=e=>{ingest(e.target.files);fileInput.value="";};
+fileInput.onchange=e=>{ const f=e.target.files; ingest(f); fileInput.value=""; };
 const dz=document.getElementById('dropzone');
 ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hot');}));
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hot');}));
