@@ -565,13 +565,25 @@ document.getElementById('dealerGo').onclick=async()=>{
 };
 
 /* ---------- import inventory ---------- */
+// Uses our own server-side middleman (/api/proxy) so dealer sites that block
+// browser/CORS requests can still be read.
 async function proxyGet(url){
-  const sources=[
-    'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
-    'https://corsproxy.io/?url='+encodeURIComponent(url),
-    'https://r.jina.ai/'+url
-  ];
-  let last; for(const s of sources){ try{ return await fetchOne(s,15000); }catch(e){ last=e; } } throw last||new Error('fetch failed');
+  return await fetchOne(location.origin+'/api/proxy?url='+encodeURIComponent(url), 25000);
+}
+// Reduce full inventory to "main cars": one base + one top trim per make+model line.
+const MK_MAKES={'acura':1,'alfa-romeo':1,'aston-martin':1,'audi':1,'bentley':1,'bmw':1,'buick':1,'cadillac':1,'chevrolet':1,'chrysler':1,'dodge':1,'ferrari':1,'fiat':1,'ford':1,'genesis':1,'gmc':1,'honda':1,'hyundai':1,'ineos':1,'infiniti':1,'jaguar':1,'jeep':1,'kia':1,'lamborghini':1,'land-rover':1,'lexus':1,'lincoln':1,'lotus':1,'maserati':1,'mazda':1,'mclaren':1,'mercedes-benz':1,'mini':1,'mitsubishi':1,'nissan':1,'polestar':1,'porsche':1,'ram':1,'rivian':1,'rolls-royce':1,'subaru':1,'tesla':1,'toyota':1,'volkswagen':1,'volvo':1};
+const MK_TOP=/(limited|platinum|touring|premium|prestige|denali|high-country|trailhawk|summit|type-s|amg|reserve|signature|calligraphy|black-edition|autobiography|first-edition|raptor|trd-pro|srt|track|rs|gt)/;
+const MK_BASE=/(base|-l-|-le-|-ls-|-s-|-se-|-sv-|-sl-|-gls-|-lx-|-ex-|standard|-wt-|tradesman|work-truck|big-bend)/;
+function selectMainCars(urls){
+  const g={};
+  urls.forEach(u=>{ const slug=u.replace(/\/+$/,'').split('/inventory/')[1]||''; const p=slug.split('-');
+    let i; if(p[0]==='certified'&&p[1]==='used')i=2; else i=1; i++; // skip condition + year
+    let make; const two=(p[i]||'')+'-'+(p[i+1]||''); if(MK_MAKES[two]){make=two;i+=2;} else {make=p[i]||'';i+=1;}
+    const model=p[i]||''; const rest='-'+p.slice(i).join('-')+'-'; const vin=p[p.length-1];
+    const key=make+'|'+model; (g[key]=g[key]||[]).push({u,vin,score:MK_TOP.test(rest)?2:MK_BASE.test(rest)?0:1}); });
+  const keep=[];
+  Object.values(g).forEach(arr=>{ const base=arr.reduce((a,b)=>b.score<a.score?b:a); const top=arr.reduce((a,b)=>b.score>a.score?b:a); const s=new Set(); [base,top].forEach(x=>{ if(!s.has(x.vin)){s.add(x.vin); keep.push(x.u);} }); });
+  return keep;
 }
 function brandFromSlug(slug,dealer){
   let best=null;
@@ -616,9 +628,11 @@ async function runImport(){
     let urls=[...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map(m=>m[1]).filter(u=>/\/inventory\//.test(u));
     urls=[...new Set(urls)];
     if(!urls.length){ st.textContent="Couldn't find vehicle URLs in that sitemap."; importRunning=false; go.disabled=false; go.textContent='Start import'; return; }
+    const fullCount=urls.length;
+    urls=selectMainCars(urls); // base + top per model line only
     const haveVins=new Set(state.cache.filter(i=>i.dealerId===dealer.id&&i.vin).map(i=>i.vin));
     let done=0, added=0, failed=0; const total=urls.length;
-    const update=()=>{ bar.style.width=(done/total*100)+'%'; st.innerHTML=`<span class="spin"></span>Imported <b>${added}</b> of ${total} cars… (${failed} skipped)`; };
+    const update=()=>{ bar.style.width=(done/total*100)+'%'; st.innerHTML=`<span class="spin"></span>${fullCount.toLocaleString()} cars → ${total} main models. Imported <b>${added}</b> of ${total}… (${failed} skipped)`; };
     update();
     const queue=urls.slice();
     async function worker(){
@@ -682,9 +696,15 @@ async function driveFolder(name,parentId){
   return (await cr.json()).id;
 }
 async function driveUpload(img,parentId){
+  let blob=img.blob;
+  if(!blob){ const r0=await fetch(img.fullUrl||img.imgUrl); if(!r0.ok) throw new Error('img '+r0.status); blob=await r0.blob(); }
+  const type=blob.type||img.type||'image/jpeg';
+  let fname=(img.name||'image').replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim().slice(0,80);
+  if(img.vin) fname+=' '+img.vin;
+  if(!/\.(jpe?g|png|webp)$/i.test(fname)) fname+=(type.indexOf('png')>=0?'.png':'.jpg');
   const b='studio'+Date.now()+Math.random().toString(36).slice(2);
-  const head='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:img.name,parents:[parentId]})+'\r\n--'+b+'\r\nContent-Type: '+(img.type||'application/octet-stream')+'\r\n\r\n';
-  const body=new Blob([head,img.blob,'\r\n--'+b+'--']);
+  const head='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:fname,parents:[parentId]})+'\r\n--'+b+'\r\nContent-Type: '+type+'\r\n\r\n';
+  const body=new Blob([head,blob,'\r\n--'+b+'--']);
   const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'multipart/related; boundary='+b},body});
   if(!r.ok)throw new Error('upload '+r.status); return (await r.json()).id;
 }
@@ -693,7 +713,7 @@ async function driveUpload(img,parentId){
 const publishModal=document.getElementById('publishModal');
 document.getElementById('publishBtn').onclick=()=>{
   const items=imgsFor(state.sel); const unpub=items.filter(i=>!i.driveId).length;
-  document.getElementById('publishDesc').innerHTML=`Uploads <b>${items.length}</b> banner${items.length!==1?'s':''} from <b>${currentTitle().replace(/<[^>]+>/g,'')}</b> to a <b>Studio</b> folder in your Drive, organized by dealership → folder. ${unpub} not yet on Drive.`;
+  document.getElementById('publishDesc').innerHTML=`Uploads <b>${items.length}</b> image${items.length!==1?'s':''} from <b>${currentTitle().replace(/<[^>]+>/g,'')}</b> into your Google Drive — a top folder named after the dealership, with a sub-folder per brand. ${unpub} not yet on Drive. (Tip: select <b>All Banners</b> to publish everything at once.)`;
   document.getElementById('prog').classList.remove('show'); document.getElementById('progBar').style.width="0";
   publishModal.classList.add('open');
 };
@@ -702,23 +722,24 @@ document.getElementById('publishGo').onclick=()=>ensureAuth(doPublish);
 async function doPublish(){
   const items=imgsFor(state.sel); const todo=items.filter(i=>!i.driveId);
   if(!todo.length){toast('Everything here is already on Drive');publishModal.classList.remove('open');return;}
-  const prog=document.getElementById('prog'),bar=document.getElementById('progBar');
+  const prog=document.getElementById('prog'),bar=document.getElementById('progBar'),desc=document.getElementById('publishDesc');
   prog.classList.add('show'); document.getElementById('publishGo').disabled=true;
-  try{
-    const root=await driveFolder("Studio",null); const fmap={};
-    let done=0;
-    for(const img of todo){
+  const fmap={}; let done=0, ok=0, fail=0;
+  for(const img of todo){
+    try{
       const dName=img.dealerId?(dealerById(img.dealerId)?.name||'Unsorted'):'Unsorted';
       const fName=img.folder||'Unsorted';
-      const dk='D:'+dName; if(!fmap[dk]) fmap[dk]=await driveFolder(dName,root);
-      const fk=dk+'/'+fName; if(!fmap[fk]) fmap[fk]=await driveFolder(fName,fmap[dk]);
+      if(!fmap[dName]) fmap[dName]=await driveFolder(dName,null);           // top folder = dealership name
+      const fk=dName+'||'+fName; if(!fmap[fk]) fmap[fk]=await driveFolder(fName,fmap[dName]); // brand sub-folder
       const driveId=await driveUpload(img,fmap[fk]);
-      img.driveId=driveId; img.publishedAt=Date.now(); await dbPut(img);
-      done++; bar.style.width=(done/todo.length*100)+"%";
-    }
-    toast('Published '+done+' to Drive ✓'); publishModal.classList.remove('open'); refresh();
-  }catch(err){console.error(err);toast('Publish error — check Client ID & Drive API');}
-  finally{document.getElementById('publishGo').disabled=false;}
+      img.driveId=driveId; img.publishedAt=Date.now(); dbPut(img).catch(()=>{}); ok++;
+    }catch(e){ fail++; console.warn('publish fail',img&&img.name,e); }
+    done++; bar.style.width=(done/todo.length*100)+'%';
+    desc.innerHTML=`Uploading to Drive… <b>${ok}</b> done${fail?', '+fail+' failed':''} of ${todo.length}.`;
+  }
+  toast('Published '+ok+' to Drive ✓'); render();
+  document.getElementById('publishGo').disabled=false;
+  desc.innerHTML=`Done — <b>${ok}</b> image${ok!==1?'s':''} now in Drive, organized by dealership → brand${fail?'. '+fail+' failed (try again).':'.'}`;
 }
 
 /* ---------- init ---------- */
