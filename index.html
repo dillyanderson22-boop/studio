@@ -634,23 +634,24 @@ async function proxyGet(url){
 const MK_MAKES={'acura':1,'alfa-romeo':1,'aston-martin':1,'audi':1,'bentley':1,'bmw':1,'buick':1,'cadillac':1,'chevrolet':1,'chrysler':1,'dodge':1,'ferrari':1,'fiat':1,'ford':1,'genesis':1,'gmc':1,'honda':1,'hyundai':1,'ineos':1,'infiniti':1,'jaguar':1,'jeep':1,'kia':1,'lamborghini':1,'land-rover':1,'lexus':1,'lincoln':1,'lotus':1,'maserati':1,'mazda':1,'mclaren':1,'mercedes-benz':1,'mini':1,'mitsubishi':1,'nissan':1,'polestar':1,'porsche':1,'ram':1,'rivian':1,'rolls-royce':1,'subaru':1,'tesla':1,'toyota':1,'volkswagen':1,'volvo':1};
 const MK_TOP=/(limited|platinum|touring|premium|prestige|denali|high-country|trailhawk|summit|type-s|amg|reserve|signature|calligraphy|black-edition|autobiography|first-edition|raptor|trd-pro|srt|track|rs|gt)/;
 const MK_BASE=/(base|-l-|-le-|-ls-|-s-|-se-|-sv-|-sl-|-gls-|-lx-|-ex-|standard|-wt-|tradesman|work-truck|big-bend)/;
+// --- platform-agnostic parsing: works for any dealer URL shape ---
+function vinFromUrl(u){ const m=u.toUpperCase().match(/(?:^|[^A-Z0-9])([A-HJ-NPR-Z0-9]{17})(?:[^A-Z0-9]|$)/); return m?m[1]:''; }
+function makeFromUrl(u){ const lc=u.toLowerCase(); let best=null;
+  for(const al of CAR_BRANDS){ for(const a of al){ const fs=a.toLowerCase().replace(/\s+/g,'-'); const re=new RegExp('(^|[\\/_-])'+fs.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')+'($|[\\/_-])'); if(re.test(lc)){ if(!best||fs.length>best.l)best={name:al[0],l:fs.length}; break; } } }
+  return best?best.name:null; }
+function brandForUrl(u,dealer){ const lc=u.toLowerCase(); let best=null;
+  (dealer.folders||[]).forEach(f=>{ const fs=f.toLowerCase().replace(/\s+/g,'-'); const re=new RegExp('(^|[\\/_-])'+fs.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')+'($|[\\/_-])'); if(re.test(lc)&&(!best||fs.length>best.l))best={name:f,l:fs.length}; });
+  if(best)return best.name; return makeFromUrl(u); }
+function modelKey(u){ const make=makeFromUrl(u); const lc=u.toLowerCase(); if(!make)return '?|'+(vinFromUrl(u)||u).slice(-6); const fs=make.toLowerCase().replace(/\s+/g,'-'); const idx=lc.indexOf(fs); let model='?'; if(idx>=0){ const after=lc.slice(idx+fs.length).replace(/^[\/_-]+/,''); model=(after.split(/[\/_-]/)[0]||'?'); } return make+'|'+model; }
+function nameFromUrl(u){ const seg=u.replace(/\/+$/,'').split('/').filter(Boolean).pop()||''; const vin=vinFromUrl(u); return seg.replace(new RegExp(vin,'i'),'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim(); }
 function selectMainCars(urls){
+  if(urls.length<=700) return urls;                 // small inventory — import everything
   const g={};
-  urls.forEach(u=>{ const slug=u.replace(/\/+$/,'').split('/inventory/')[1]||''; const p=slug.split('-');
-    let i; if(p[0]==='certified'&&p[1]==='used')i=2; else i=1; i++; // skip condition + year
-    let make; const two=(p[i]||'')+'-'+(p[i+1]||''); if(MK_MAKES[two]){make=two;i+=2;} else {make=p[i]||'';i+=1;}
-    const model=p[i]||''; const rest='-'+p.slice(i).join('-')+'-'; const vin=p[p.length-1];
-    const key=make+'|'+model; (g[key]=g[key]||[]).push({u,vin,score:MK_TOP.test(rest)?2:MK_BASE.test(rest)?0:1}); });
-  const keep=[];
-  Object.values(g).forEach(arr=>{ const base=arr.reduce((a,b)=>b.score<a.score?b:a); const top=arr.reduce((a,b)=>b.score>a.score?b:a); const s=new Set(); [base,top].forEach(x=>{ if(!s.has(x.vin)){s.add(x.vin); keep.push(x.u);} }); });
+  urls.forEach(u=>{ const key=modelKey(u), vin=vinFromUrl(u), lc=u.toLowerCase();
+    (g[key]=g[key]||[]).push({u,vin,score:MK_TOP.test(lc)?2:MK_BASE.test(lc)?0:1}); });
+  const keep=[]; Object.values(g).forEach(arr=>{ const base=arr.reduce((a,b)=>b.score<a.score?b:a); const top=arr.reduce((a,b)=>b.score>a.score?b:a); const s=new Set(); [base,top].forEach(x=>{ if(!s.has(x.vin)){s.add(x.vin); keep.push(x.u);} }); });
   return keep;
 }
-function brandFromSlug(slug,dealer){
-  let best=null;
-  dealer.folders.forEach(f=>{ const fs=f.toLowerCase().replace(/\s+/g,'-'); if(slug.includes(fs)){ if(!best||fs.length>best.fs.length) best={name:f,fs}; } });
-  return best?best.name:null;
-}
-function vinFromUrl(u){ const m=u.replace(/\/+$/,'').split('/').pop().split('-').pop(); return (m||'').toUpperCase(); }
 function extractOgImage(html){
   let m=html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
        ||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i)
@@ -685,31 +686,30 @@ async function runImport(){
   st.innerHTML='<span class="spin"></span>Reading the sitemap…';
   try{
     const xml=await proxyGet(url);
-    let urls=[...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map(m=>m[1]).filter(u=>/\/inventory\//.test(u));
+    let urls=[...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map(m=>m[1]).filter(u=>!!vinFromUrl(u));
     urls=[...new Set(urls)];
-    if(!urls.length){ st.textContent="Couldn't find vehicle URLs in that sitemap."; importRunning=false; go.disabled=false; go.textContent='Start import'; return; }
+    if(!urls.length){ st.textContent="Couldn't find vehicle pages in that sitemap (no VINs found). Make sure it's the inventory/VDP sitemap."; importRunning=false; go.disabled=false; go.textContent='Start import'; return; }
     const fullCount=urls.length;
     urls=selectMainCars(urls); // base + top per model line only
     const haveVins=new Set(state.cache.filter(i=>i.dealerId===dealer.id&&i.vin).map(i=>i.vin));
     let done=0, added=0, failed=0; const total=urls.length;
-    const update=()=>{ bar.style.width=(done/total*100)+'%'; st.innerHTML=`<span class="spin"></span>${fullCount.toLocaleString()} cars → ${total} main models. Imported <b>${added}</b> of ${total}… (${failed} skipped)`; };
+    const update=()=>{ bar.style.width=(done/total*100)+'%'; const head=total<fullCount?`${fullCount.toLocaleString()} cars → ${total} main models. `:''; st.innerHTML=`<span class="spin"></span>${head}Imported <b>${added}</b> of ${total}… (${failed} skipped)`; };
     update();
     const queue=urls.slice();
     async function worker(){
       while(queue.length){
         const u=queue.shift();
         try{
-          const slug=u.replace(/\/+$/,'').split('/inventory/')[1]||'';
           const vin=vinFromUrl(u);
           if(vin && haveVins.has(vin)){ done++; update(); continue; }
           const html=await proxyGet(u);
           const img=extractOgImage(html);
           if(!img){ failed++; done++; update(); continue; }
-          const brand=brandFromSlug(slug,dealer);
+          const brand=brandForUrl(u,dealer);
           if(brand && !dealer.folders.includes(brand)){ dealer.folders.push(brand); saveDealers(); }
           const small=img.replace(/\/0x0\//,'/800x600/');
           const title=extractOgTitle(html);
-          const rec={id:uid(),name:(title||slug.replace(/-/g,' ')).slice(0,90),vin,dealerId:dealer.id,folder:brand||null,imgUrl:small,fullUrl:img,createdAt:Date.now(),driveId:null};
+          const rec={id:uid(),name:(title||nameFromUrl(u)||'Vehicle').slice(0,90),vin,dealerId:dealer.id,folder:brand||null,imgUrl:small,fullUrl:img,createdAt:Date.now(),driveId:null};
           state.cache.push(rec); if(vin)haveVins.add(vin); dbPut(rec).catch(()=>{});
           added++; done++;
           if(added%5===0) render();
