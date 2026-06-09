@@ -731,7 +731,9 @@ document.getElementById('settingsCancel').onclick=()=>settingsModal.classList.re
 document.getElementById('settingsSave').onclick=()=>{localStorage.setItem(LS_CLIENT,clientIdInput.value.trim());settingsModal.classList.remove('open');toast('Saved');initTokenClient();};
 
 /* ---------- Google auth ---------- */
-function clientId(){return (localStorage.getItem(LS_CLIENT)||"").trim();}
+// Pre-configured Google OAuth client (public ID — safe to ship). Lets "Connect Google" work with no setup.
+const DEFAULT_CLIENT_ID="914090426737-vo7p4h01vgl7hdrvb5pufctloljd0uo9.apps.googleusercontent.com";
+function clientId(){return ((localStorage.getItem(LS_CLIENT)||DEFAULT_CLIENT_ID)||"").trim();}
 function initTokenClient(){ if(!window.google||!google.accounts||!clientId())return;
   state.tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId(),scope:'https://www.googleapis.com/auth/drive.file',
     callback:(resp)=>{ if(resp&&resp.access_token){state.accessToken=resp.access_token;state.tokenExpiry=Date.now()+(resp.expires_in?resp.expires_in*1000:3000000);setG(true);toast('Google Drive connected');if(state._afterAuth){const f=state._afterAuth;state._afterAuth=null;f();}} }});
