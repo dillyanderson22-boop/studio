@@ -499,6 +499,7 @@ const REMBG_PROTECT=new Set(['Backgrounds','Sales Event Banners',...REMOVED_DEFA
 // eligible = a car image that still has its background (skip protected folders + already-cut-out)
 function rembgEligible(i){ return !i.noBg && !REMBG_PROTECT.has(i.folder); }
 document.getElementById('rembgBtn').onclick=(e)=>{
+  e.stopPropagation();
   const viewItems=imgsFor(state.sel).filter(rembgEligible);
   const allItems=state.cache.filter(rembgEligible);
   const doneAll=state.cache.filter(i=>i.noBg).length;
