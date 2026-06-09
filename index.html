@@ -117,6 +117,8 @@
   .prog{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:14px;display:none}
   .prog.show{display:block}
   .prog i{display:block;height:100%;background:var(--ink);width:0;transition:.2s}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -266,11 +268,31 @@ function detectBrands(text){
   }
   return found;
 }
+async function fetchOne(u, ms){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), ms);
+  try{
+    const r=await fetch(u,{signal:ctrl.signal});
+    if(!r.ok) throw new Error('status '+r.status);
+    const txt=await r.text();
+    if(!txt || txt.length<200) throw new Error('empty');
+    return txt;
+  } finally { clearTimeout(t); }
+}
 async function fetchSiteText(url){
   const clean=url.replace(/^https?:\/\//i,'').replace(/\/+$/,'');
-  const r=await fetch('https://r.jina.ai/https://'+clean,{headers:{'Accept':'text/plain','X-Return-Format':'text'}});
-  if(!r.ok) throw new Error('read failed '+r.status);
-  return await r.text();
+  const full='https://'+clean;
+  // fast raw-HTML proxies first, slow-but-reliable reader last
+  const sources=[
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(full),
+    'https://corsproxy.io/?url='+encodeURIComponent(full),
+    'https://r.jina.ai/'+full
+  ];
+  let lastErr;
+  for(const s of sources){
+    try{ return await fetchOne(s, 12000); }catch(e){ lastErr=e; }
+  }
+  throw lastErr || new Error('all sources failed');
 }
 const LS_FOLDERS = "studio.folders";
 const LS_CLIENT = "studio.clientId";
@@ -543,7 +565,8 @@ document.getElementById('dealerCancel').onclick=()=>dealerModal.classList.remove
 document.getElementById('dealerGo').onclick=async()=>{
   const url=document.getElementById('dealerUrl').value.trim(); if(!url) return;
   const st=document.getElementById('dealerStatus'), go=document.getElementById('dealerGo');
-  go.disabled=true; st.textContent='Reading the site… (a few seconds)';
+  go.disabled=true; go.textContent='Reading…';
+  st.innerHTML='<span class="spin"></span>Reading the site and finding brands… (up to ~15s)';
   try{
     const text=await fetchSiteText(url);
     const brands=detectBrands(text);
@@ -560,8 +583,8 @@ document.getElementById('dealerGo').onclick=async()=>{
     }
   }catch(err){
     console.error(err);
-    st.textContent="Couldn't read that site (it may block readers). Check the URL, or add folders manually.";
-  } finally { go.disabled=false; }
+    st.textContent="Couldn't read that site (it may block readers). Check the URL, or add folders manually with “New folder”.";
+  } finally { go.disabled=false; go.textContent='Detect & add'; }
 };
 
 /* ---------- init ---------- */
