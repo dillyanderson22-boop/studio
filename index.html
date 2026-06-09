@@ -246,14 +246,16 @@ let state = { dealers:[], sel:{scope:'all'}, db:null, cache:[], accessToken:null
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
 /* ---------- IndexedDB ---------- */
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("studioDB",2);
+let dbReadyP=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("studioDB",1);
   r.onupgradeneeded=e=>{const db=e.target.result; if(!db.objectStoreNames.contains("images")) db.createObjectStore("images",{keyPath:"id"});};
-  r.onsuccess=e=>res(e.target.result); r.onerror=e=>rej(e.target.error);});}
-function store(m){return state.db.transaction("images",m).objectStore("images");}
-function dbPut(x){return new Promise((res,rej)=>{const r=store("readwrite").put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
-function dbDelete(id){return new Promise((res,rej)=>{const r=store("readwrite").delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
-function dbAll(){return new Promise((res,rej)=>{const r=store("readonly").getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
-function dbGet(id){return new Promise((res,rej)=>{const r=store("readonly").get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  r.onsuccess=e=>res(e.target.result); r.onerror=e=>rej(e.target.error); r.onblocked=()=>{};});}
+function dbReady(){ if(!dbReadyP) dbReadyP=openDB(); return dbReadyP; }
+async function store(m){const db=await dbReady(); return db.transaction("images",m).objectStore("images");}
+async function dbPut(x){const s=await store("readwrite");return new Promise((res,rej)=>{const r=s.put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+async function dbDelete(id){const s=await store("readwrite");return new Promise((res,rej)=>{const r=s.delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+async function dbAll(){const s=await store("readonly");return new Promise((res,rej)=>{const r=s.getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+async function dbGet(id){const s=await store("readonly");return new Promise((res,rej)=>{const r=s.get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 
 /* ---------- persistence ---------- */
 function loadDealers(){try{const d=JSON.parse(localStorage.getItem(LS_DEALERS));if(Array.isArray(d))return d;}catch(e){}return [];}
@@ -556,7 +558,7 @@ async function doPublish(){
 /* ---------- init ---------- */
 (async function(){
   state.dealers=loadDealers(); state.sel=loadSel();
-  state.db=await openDB(); await refresh();
+  dbReady(); await refresh();
   let tries=0; const iv=setInterval(()=>{if(window.google&&google.accounts){initTokenClient();clearInterval(iv);}if(++tries>40)clearInterval(iv);},150);
 })();
 </script>
