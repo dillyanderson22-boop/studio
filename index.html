@@ -131,9 +131,13 @@
 
 <div class="body">
   <aside id="sidebar">
-    <button class="btn primary" id="addDealerBtn" style="width:100%;justify-content:center;margin-bottom:8px">
+    <button class="btn primary" id="addDealerBtn" style="width:100%;justify-content:center;margin-bottom:6px">
       <svg class="icon" viewBox="0 0 24 24"><path d="M3 13l1.8-5.1A2 2 0 0 1 6.7 6.5h10.6a2 2 0 0 1 1.9 1.4L21 13M5 13h14v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H8v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>
       Add dealership
+    </button>
+    <button class="btn ghost" id="importBtn" style="width:100%;justify-content:center;margin-bottom:8px">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0l4-4m-4 4l-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      Import inventory
     </button>
     <div id="tree"></div>
   </aside>
@@ -185,6 +189,24 @@
     <div class="modal-actions">
       <button class="btn ghost" id="nameCancel">Cancel</button>
       <button class="btn primary" id="nameSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import inventory modal -->
+<div class="overlay" id="importModal">
+  <div class="modal" style="max-width:520px">
+    <h3>Import inventory</h3>
+    <p>Paste the dealership's inventory <b>sitemap URL</b>. Studio reads every vehicle, grabs its main front-3/4 photo, and files each car into its brand folder.</p>
+    <label>Inventory sitemap URL</label>
+    <input id="importUrl" placeholder="https://www.lutherauto.com/dealer-inspire-inventory/inventory_sitemap" />
+    <label>Add to dealership</label>
+    <select id="importDealer" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;margin-bottom:16px;background:#fff"></select>
+    <div class="prog" id="importProg"><i id="importBar"></i></div>
+    <div id="importStatus" style="font-size:13px;color:var(--ink-2);line-height:1.5;min-height:18px;margin-bottom:14px"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="importCancel">Close</button>
+      <button class="btn primary" id="importGo">Start import</button>
     </div>
   </div>
 </div>
@@ -401,7 +423,7 @@ function renderGrid(){
   document.getElementById('dzTarget').textContent=uploadTarget().label;
   grid.innerHTML=""; empty.style.display=items.length?"none":"block";
   items.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(img=>{
-    const url=URL.createObjectURL(img.blob);
+    const url = img.blob ? URL.createObjectURL(img.blob) : (img.imgUrl||'');
     const card=document.createElement('div'); card.className="card"; card.draggable=true;
     card.ondragstart=e=>{e.dataTransfer.setData('imgid',img.id);card.classList.add('dragging');};
     card.ondragend=()=>card.classList.remove('dragging');
@@ -418,7 +440,7 @@ function renderGrid(){
     menu.innerHTML=html;
     dots.onclick=e=>{e.stopPropagation();document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open'));menu.classList.toggle('open');};
     menu.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const t=JSON.parse(b.dataset.move);img.dealerId=t.d;img.folder=t.f;await dbPut(img);toast('Moved');refresh();});
-    menu.querySelector('[data-act="download"]').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=img.name;a.click();};
+    menu.querySelector('[data-act="download"]').onclick=()=>{const a=document.createElement('a');a.href=img.fullUrl||url;if(img.blob)a.download=img.name;else a.target='_blank';a.click();};
     menu.querySelector('[data-act="rename"]').onclick=()=>askName('Rename banner','Name',img.name,(v)=>{img.name=v;const c=state.cache.find(x=>x.id===img.id);if(c)c.name=v;render();dbPut(img).catch(()=>{});});
     menu.querySelector('[data-act="delete"]').onclick=()=>askConfirm('Delete banner','Delete this banner? This cannot be undone.','Delete',()=>{
       state.cache=state.cache.filter(x=>x.id!==img.id); render(); toast('Deleted'); dbDelete(img.id).catch(()=>{});
@@ -541,6 +563,93 @@ document.getElementById('dealerGo').onclick=async()=>{
   }catch(err){ console.error(err); st.textContent="Couldn't read that site (it may block readers). Check the URL, or create the dealership and add folders manually."; }
   finally{ go.disabled=false; go.textContent='Detect & add'; }
 };
+
+/* ---------- import inventory ---------- */
+async function proxyGet(url){
+  const sources=[
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+    'https://corsproxy.io/?url='+encodeURIComponent(url),
+    'https://r.jina.ai/'+url
+  ];
+  let last; for(const s of sources){ try{ return await fetchOne(s,15000); }catch(e){ last=e; } } throw last||new Error('fetch failed');
+}
+function brandFromSlug(slug,dealer){
+  let best=null;
+  dealer.folders.forEach(f=>{ const fs=f.toLowerCase().replace(/\s+/g,'-'); if(slug.includes(fs)){ if(!best||fs.length>best.fs.length) best={name:f,fs}; } });
+  return best?best.name:null;
+}
+function vinFromUrl(u){ const m=u.replace(/\/+$/,'').split('/').pop().split('-').pop(); return (m||'').toUpperCase(); }
+function extractOgImage(html){
+  let m=html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+       ||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i)
+       ||html.match(/https?:\/\/content\.homenetiol\.com\/[^\s"'<>]+\.jpg/i);
+  if(!m) return null; const u=m[1]||m[0];
+  return /^https?:/.test(u)?u:null;
+}
+function extractOgTitle(html){ const m=html.match(/property=["']og:title["'][^>]*content=["']([^"']+)["']/i)||html.match(/content=["']([^"']+)["'][^>]*property=["']og:title["']/i); return m?m[1].replace(/&amp;/g,'&').trim():null; }
+
+const importModal=document.getElementById('importModal');
+let importRunning=false;
+document.getElementById('importBtn').onclick=()=>{
+  const sel=document.getElementById('importDealer');
+  sel.innerHTML=state.dealers.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')||'<option value="">(add a dealership first)</option>';
+  document.getElementById('importUrl').value=document.getElementById('importUrl').value||'';
+  document.getElementById('importStatus').textContent='';
+  document.getElementById('importProg').classList.remove('show'); document.getElementById('importBar').style.width='0';
+  importModal.classList.add('open');
+};
+document.getElementById('importCancel').onclick=()=>{ importModal.classList.remove('open'); };
+document.getElementById('importGo').onclick=()=>{ if(!importRunning) runImport(); };
+
+async function runImport(){
+  const url=document.getElementById('importUrl').value.trim();
+  const dealerId=document.getElementById('importDealer').value;
+  const dealer=dealerById(dealerId);
+  const st=document.getElementById('importStatus'), go=document.getElementById('importGo');
+  const prog=document.getElementById('importProg'), bar=document.getElementById('importBar');
+  if(!url){ st.textContent='Paste the sitemap URL first.'; return; }
+  if(!dealer){ st.textContent='Add a dealership first, then import into it.'; return; }
+  importRunning=true; go.disabled=true; go.textContent='Importing…'; prog.classList.add('show');
+  st.innerHTML='<span class="spin"></span>Reading the sitemap…';
+  try{
+    const xml=await proxyGet(url);
+    let urls=[...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map(m=>m[1]).filter(u=>/\/inventory\//.test(u));
+    urls=[...new Set(urls)];
+    if(!urls.length){ st.textContent="Couldn't find vehicle URLs in that sitemap."; importRunning=false; go.disabled=false; go.textContent='Start import'; return; }
+    const haveVins=new Set(state.cache.filter(i=>i.dealerId===dealer.id&&i.vin).map(i=>i.vin));
+    let done=0, added=0, failed=0; const total=urls.length;
+    const update=()=>{ bar.style.width=(done/total*100)+'%'; st.innerHTML=`<span class="spin"></span>Imported <b>${added}</b> of ${total} cars… (${failed} skipped)`; };
+    update();
+    const queue=urls.slice();
+    async function worker(){
+      while(queue.length){
+        const u=queue.shift();
+        try{
+          const slug=u.replace(/\/+$/,'').split('/inventory/')[1]||'';
+          const vin=vinFromUrl(u);
+          if(vin && haveVins.has(vin)){ done++; update(); continue; }
+          const html=await proxyGet(u);
+          const img=extractOgImage(html);
+          if(!img){ failed++; done++; update(); continue; }
+          const brand=brandFromSlug(slug,dealer);
+          if(brand && !dealer.folders.includes(brand)){ dealer.folders.push(brand); saveDealers(); }
+          const small=img.replace(/\/0x0\//,'/800x600/');
+          const title=extractOgTitle(html);
+          const rec={id:uid(),name:(title||slug.replace(/-/g,' ')).slice(0,90),vin,dealerId:dealer.id,folder:brand||null,imgUrl:small,fullUrl:img,createdAt:Date.now(),driveId:null};
+          state.cache.push(rec); if(vin)haveVins.add(vin); dbPut(rec).catch(()=>{});
+          added++; done++;
+          if(added%5===0) render();
+          update();
+        }catch(e){ failed++; done++; update(); }
+      }
+    }
+    await Promise.all([worker(),worker(),worker(),worker()]);
+    saveDealers(); render();
+    st.innerHTML=`Done. Imported <b>${added}</b> cars into ${esc(dealer.name)} (${failed} skipped). Filed by brand.`;
+    toast('Imported '+added+' cars ✓');
+  }catch(e){ console.error(e); st.textContent="Import failed reading the sitemap. Check the URL or try again."; }
+  finally{ importRunning=false; go.disabled=false; go.textContent='Start import'; }
+}
 
 /* ---------- settings ---------- */
 const settingsModal=document.getElementById('settingsModal'), clientIdInput=document.getElementById('clientIdInput');
