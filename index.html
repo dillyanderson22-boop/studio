@@ -7,20 +7,15 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --bg:#ffffff; --ink:#0a0a0a; --ink-2:#666; --line:#e6e6e6;
-    --hover:#f5f5f5; --sel:#0a0a0a; --sel-ink:#fff; --soft:#fafafa;
-    --danger:#b00020;
+    --bg:#fff; --ink:#0a0a0a; --ink-2:#666; --line:#e6e6e6;
+    --hover:#f5f5f5; --sel:#0a0a0a; --sel-ink:#fff; --soft:#fafafa; --danger:#b00020;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-    color:var(--ink);background:var(--bg);
-    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;overflow:hidden;
-  }
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;overflow:hidden}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
-    padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:#fff;color:var(--ink);transition:.12s}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:#fff;color:var(--ink);transition:.12s}
   .btn:hover{background:var(--hover)}
   .btn.primary{background:var(--ink);color:#fff}
   .btn.primary:hover{opacity:.85}
@@ -28,9 +23,7 @@
   .btn:disabled{opacity:.4;cursor:not-allowed}
   .icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-  /* ---- TOP BAR ---- */
-  header{display:flex;align-items:center;gap:14px;padding:0 20px;height:60px;
-    border-bottom:1px solid var(--line);flex-shrink:0}
+  header{display:flex;align-items:center;gap:14px;padding:0 20px;height:60px;border-bottom:1px solid var(--line);flex-shrink:0}
   .logo{font-weight:800;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
   .logo .mark{width:22px;height:22px;border-radius:6px;background:var(--ink);display:inline-block}
   .spacer{flex:1}
@@ -38,31 +31,36 @@
   .gdot{width:8px;height:8px;border-radius:50%;background:#ccc}
   .gdot.on{background:#0a0a0a}
 
-  /* ---- LAYOUT ---- */
   .body{display:flex;flex:1;min-height:0}
-  aside{width:236px;border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;overflow-y:auto}
-  .side-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:6px 10px;margin-top:8px}
-  .folder{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:14px;cursor:pointer;user-select:none}
-  .folder:hover{background:var(--hover)}
-  .folder.active{background:var(--sel);color:var(--sel-ink)}
-  .folder.active .count{color:rgba(255,255,255,.6)}
-  .folder.drop{outline:2px dashed var(--ink);outline-offset:-2px}
-  .folder .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .folder .count{font-size:12px;color:var(--ink-2)}
-  .folder .fmenu{opacity:0;font-size:16px;line-height:1;padding:0 2px}
-  .folder:hover .fmenu{opacity:.55}
-  .addf{display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:13px;color:var(--ink-2);border-radius:8px;border:1px dashed var(--line);margin-top:6px}
-  .addf:hover{background:var(--hover);color:var(--ink)}
+  aside{width:256px;border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;overflow-y:auto}
+  .side-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:6px 10px;margin-top:10px}
 
-  /* ---- MAIN ---- */
+  .row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;font-size:14px;cursor:pointer;user-select:none}
+  .row:hover{background:var(--hover)}
+  .row.active{background:var(--sel);color:var(--sel-ink)}
+  .row.active .count,.row.active .chev{color:rgba(255,255,255,.6)}
+  .row.drop{outline:2px dashed var(--ink);outline-offset:-2px}
+  .row .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .count{font-size:12px;color:var(--ink-2)}
+  .row .menu-dots{opacity:0;font-size:16px;line-height:1;padding:0 2px}
+  .row:hover .menu-dots{opacity:.55}
+  .chev{width:14px;height:14px;flex-shrink:0;transition:transform .15s;color:var(--ink-2)}
+  .chev.open{transform:rotate(90deg)}
+  .dealer-head .nm{font-weight:700}
+  .folder-row{padding-left:30px}
+  .folder-row .ico{width:15px;height:15px;flex-shrink:0;color:var(--ink-2)}
+  .row.active .ico{color:rgba(255,255,255,.7)}
+
+  .addbtn{display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:13px;color:var(--ink-2);border-radius:8px;border:1px dashed var(--line);margin-top:6px}
+  .addbtn:hover{background:var(--hover);color:var(--ink)}
+
   main{flex:1;display:flex;flex-direction:column;min-width:0}
   .toolbar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--line)}
-  .toolbar h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .toolbar h1{font-size:20px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+  .toolbar h1 .crumb{color:var(--ink-2);font-weight:500}
   .toolbar .meta{font-size:13px;color:var(--ink-2)}
   .scroll{flex:1;overflow-y:auto;padding:24px}
-
-  .dropzone{border:1.5px dashed var(--line);border-radius:14px;padding:40px;text-align:center;color:var(--ink-2);
-    transition:.12s;margin-bottom:24px;background:var(--soft)}
+  .dropzone{border:1.5px dashed var(--line);border-radius:14px;padding:40px;text-align:center;color:var(--ink-2);transition:.12s;margin-bottom:24px;background:var(--soft)}
   .dropzone.hot{border-color:var(--ink);background:#fff;color:var(--ink)}
   .dropzone strong{color:var(--ink);font-weight:700}
 
@@ -81,19 +79,17 @@
   .card-actions{position:relative}
   .dots{font-size:18px;line-height:1;padding:2px 6px;border-radius:6px;color:var(--ink-2)}
   .dots:hover{background:var(--hover)}
-  .menu{position:absolute;right:0;top:26px;background:#fff;border:1px solid var(--line);border-radius:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,.12);min-width:170px;z-index:20;overflow:hidden;display:none}
+  .menu{position:absolute;right:0;top:26px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.12);min-width:200px;z-index:20;overflow:hidden;display:none;max-height:340px;overflow-y:auto}
   .menu.open{display:block}
   .menu button{display:block;width:100%;text-align:left;padding:10px 13px;font-size:13px}
   .menu button:hover{background:var(--hover)}
   .menu .sep{height:1px;background:var(--line);margin:4px 0}
-  .menu .mv{font-size:11px;color:var(--ink-2);padding:6px 13px 2px;text-transform:uppercase;letter-spacing:.06em}
+  .menu .lbl{font-size:11px;color:var(--ink-2);padding:8px 13px 2px;text-transform:uppercase;letter-spacing:.06em}
   .menu .danger{color:var(--danger)}
 
   .empty{text-align:center;color:var(--ink-2);padding:80px 20px}
   .empty svg{width:40px;height:40px;opacity:.4;margin-bottom:12px}
 
-  /* ---- MODAL ---- */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
   .overlay.open{display:flex}
   .modal{background:#fff;border-radius:16px;width:100%;max-width:460px;padding:26px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
@@ -106,14 +102,10 @@
   .steps{font-size:12.5px;color:var(--ink-2);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;line-height:1.6}
   .steps b{color:var(--ink)}
   .steps code{background:#eee;padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .note{font-size:13px;color:var(--ink-2);margin-top:8px}
 
-  /* ---- TOAST ---- */
-  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
-    background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 18px;border-radius:10px;
-    transition:.25s;z-index:200;pointer-events:none;max-width:90vw;text-align:center}
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 18px;border-radius:10px;transition:.25s;z-index:200;pointer-events:none;max-width:90vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-  /* progress bar in publish */
   .prog{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:14px;display:none}
   .prog.show{display:block}
   .prog i{display:block;height:100%;background:var(--ink);width:0;transition:.2s}
@@ -133,40 +125,31 @@
     <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
   <button class="btn primary" id="publishBtn">
-    <svg class="icon" viewBox="0 0 24 24"><path d="M12 19V6M5 12l7-7 7 7"/></svg>
-    Publish to Drive
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 19V6M5 12l7-7 7 7"/></svg> Publish to Drive
   </button>
 </header>
 
 <div class="body">
   <aside id="sidebar">
-    <button class="btn primary" id="addDealerBtn" style="width:100%;justify-content:center;margin-bottom:10px">
+    <button class="btn primary" id="addDealerBtn" style="width:100%;justify-content:center;margin-bottom:8px">
       <svg class="icon" viewBox="0 0 24 24"><path d="M3 13l1.8-5.1A2 2 0 0 1 6.7 6.5h10.6a2 2 0 0 1 1.9 1.4L21 13M5 13h14v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H8v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>
       Add dealership
     </button>
-    <div class="side-label">Library</div>
-    <!-- folders injected here -->
-    <div id="folderList"></div>
-    <button class="addf" id="addFolderBtn">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New folder
-    </button>
+    <div id="tree"></div>
   </aside>
 
   <main>
     <div class="toolbar">
-      <h1 id="folderTitle">All Banners</h1>
-      <span class="meta" id="folderMeta"></span>
+      <h1 id="title">All Banners</h1>
+      <span class="meta" id="meta"></span>
       <div class="spacer" style="flex:1"></div>
       <button class="btn" id="uploadBtn">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg> Upload
       </button>
       <input type="file" id="fileInput" accept="image/*" multiple hidden />
     </div>
-
     <div class="scroll">
-      <div class="dropzone" id="dropzone">
-        Drag images here, or <strong>click Upload</strong>. They'll be saved into <strong id="dzFolder">this folder</strong>.
-      </div>
+      <div class="dropzone" id="dropzone">Drag images here, or <strong>click Upload</strong>. They'll be saved into <strong id="dzTarget">Unsorted</strong>.</div>
       <div class="grid" id="grid"></div>
       <div class="empty" id="empty" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -176,59 +159,13 @@
   </main>
 </div>
 
-<!-- Settings modal -->
-<div class="overlay" id="settingsModal">
-  <div class="modal">
-    <h3>Google Drive setup</h3>
-    <p>Publishing uploads your banners straight to your own Google Drive. You need a free Google OAuth <b>Client ID</b> — one-time, ~5 minutes.</p>
-    <div class="steps">
-      <b>How to get it:</b><br>
-      1. Go to <code>console.cloud.google.com</code> → create a project.<br>
-      2. APIs &amp; Services → Library → enable <b>Google Drive API</b>.<br>
-      3. APIs &amp; Services → Credentials → <b>Create OAuth client ID</b> → type <b>Web application</b>.<br>
-      4. Under <b>Authorized JavaScript origins</b> add: <code id="originHint">this site's URL</code><br>
-      5. Copy the Client ID (ends in <code>.apps.googleusercontent.com</code>) and paste below.
-    </div>
-    <label>Google OAuth Client ID</label>
-    <input id="clientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" />
-    <div class="modal-actions">
-      <button class="btn ghost" id="settingsCancel">Cancel</button>
-      <button class="btn primary" id="settingsSave">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- New folder modal -->
-<div class="overlay" id="folderModal">
-  <div class="modal">
-    <h3 id="folderModalTitle">New folder</h3>
-    <label>Folder name</label>
-    <input id="folderNameInput" placeholder="e.g. GMC, Backgrounds, Sales Events" />
-    <div class="modal-actions">
-      <button class="btn ghost" id="folderCancel">Cancel</button>
-      <button class="btn primary" id="folderSave">Create</button>
-    </div>
-  </div>
-</div>
-
-<!-- Publish modal -->
-<div class="overlay" id="publishModal">
-  <div class="modal">
-    <h3>Publish to Google Drive</h3>
-    <p id="publishDesc">This uploads every banner in your library to a <b>Studio</b> folder in your Google Drive, keeping your folder structure.</p>
-    <div class="prog" id="prog"><i id="progBar"></i></div>
-    <div class="modal-actions">
-      <button class="btn ghost" id="publishCancel">Cancel</button>
-      <button class="btn primary" id="publishGo">Publish all</button>
-    </div>
-  </div>
-</div>
-
 <!-- Add dealership modal -->
 <div class="overlay" id="dealerModal">
   <div class="modal">
     <h3>Add a dealership</h3>
-    <p>Paste the dealership's website. Studio reads it, detects every car brand they carry, and auto-creates a folder for each — plus your standard banner folders.</p>
+    <p>Paste the dealership's website. Studio reads it, detects every car brand they carry, and builds a collapsible group with a folder for each brand — plus your standard banner folders.</p>
+    <label>Dealership name (optional)</label>
+    <input id="dealerName" placeholder="e.g. Luther Auto" />
     <label>Dealership website URL</label>
     <input id="dealerUrl" placeholder="https://www.lutherauto.com" />
     <div id="dealerStatus" style="font-size:13px;color:var(--ink-2);line-height:1.5;min-height:18px;margin-bottom:14px"></div>
@@ -239,16 +176,59 @@
   </div>
 </div>
 
+<!-- Generic name modal (rename dealer/folder, new folder) -->
+<div class="overlay" id="nameModal">
+  <div class="modal">
+    <h3 id="nameTitle">Name</h3>
+    <label id="nameLabel">Name</label>
+    <input id="nameInput" placeholder="" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="nameCancel">Cancel</button>
+      <button class="btn primary" id="nameSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Google Drive setup</h3>
+    <p>Publishing uploads your banners to your own Google Drive, organized by dealership and folder. You need a free Google OAuth <b>Client ID</b> — one-time, ~5 minutes.</p>
+    <div class="steps">
+      <b>How to get it:</b><br>
+      1. Go to <code>console.cloud.google.com</code> → create a project.<br>
+      2. APIs &amp; Services → Library → enable <b>Google Drive API</b>.<br>
+      3. APIs &amp; Services → Credentials → <b>Create OAuth client ID</b> → <b>Web application</b>.<br>
+      4. Under <b>Authorized JavaScript origins</b> add: <code id="originHint">this site's URL</code><br>
+      5. Copy the Client ID and paste below.
+    </div>
+    <label>Google OAuth Client ID</label>
+    <input id="clientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="settingsCancel">Cancel</button>
+      <button class="btn primary" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish modal -->
+<div class="overlay" id="publishModal">
+  <div class="modal">
+    <h3>Publish to Google Drive</h3>
+    <p id="publishDesc"></p>
+    <div class="prog" id="prog"><i id="progBar"></i></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="publishCancel">Cancel</button>
+      <button class="btn primary" id="publishGo">Publish</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
-/* =========================================================
-   Studio — client-side banner library + Google Drive publish
-   Storage: IndexedDB (image blobs) + localStorage (folders, settings)
-   ========================================================= */
-
-const DEFAULT_FOLDERS = ["Backgrounds", "Sales Event Banners", "Seasonal Banners", "Offer Badges"];
-const CATEGORY_FOLDERS = ["Backgrounds", "Sales Event Banners", "Seasonal Banners", "Offer Badges"];
+/* ============ Studio v2 — dealership-grouped library ============ */
+const CATEGORY_FOLDERS = ["Backgrounds","Sales Event Banners","Seasonal Banners","Offer Badges"];
 const CAR_BRANDS = [
   ["Acura"],["Alfa Romeo"],["Aston Martin"],["Audi"],["Bentley"],["BMW"],["Buick"],
   ["Cadillac"],["Chevrolet","Chevy"],["Chrysler"],["Dodge"],["Ferrari"],["Fiat"],["Ford"],
@@ -258,138 +238,154 @@ const CAR_BRANDS = [
   ["Nissan"],["Polestar"],["Porsche"],["Ram"],["Rivian"],["Rolls-Royce"],["Subaru"],
   ["Tesla"],["Toyota"],["Volkswagen","VW"],["Volvo"]
 ];
-function detectBrands(text){
-  const found=[];
-  for(const aliases of CAR_BRANDS){
-    for(const a of aliases){
-      const re=new RegExp('\\b'+a.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')+'\\b','i');
-      if(re.test(text)){ found.push(aliases[0]); break; }
-    }
-  }
-  return found;
-}
-async function fetchOne(u, ms){
-  const ctrl=new AbortController();
-  const t=setTimeout(()=>ctrl.abort(), ms);
-  try{
-    const r=await fetch(u,{signal:ctrl.signal});
-    if(!r.ok) throw new Error('status '+r.status);
-    const txt=await r.text();
-    if(!txt || txt.length<200) throw new Error('empty');
-    return txt;
-  } finally { clearTimeout(t); }
-}
-async function fetchSiteText(url){
-  const clean=url.replace(/^https?:\/\//i,'').replace(/\/+$/,'');
-  const full='https://'+clean;
-  // fast raw-HTML proxies first, slow-but-reliable reader last
-  const sources=[
-    'https://api.allorigins.win/raw?url='+encodeURIComponent(full),
-    'https://corsproxy.io/?url='+encodeURIComponent(full),
-    'https://r.jina.ai/'+full
-  ];
-  let lastErr;
-  for(const s of sources){
-    try{ return await fetchOne(s, 12000); }catch(e){ lastErr=e; }
-  }
-  throw lastErr || new Error('all sources failed');
-}
-const LS_FOLDERS = "studio.folders";
-const LS_CLIENT = "studio.clientId";
-let state = { folders: [], current: "__all__", db: null, accessToken: null, tokenExpiry: 0, tokenClient: null };
+const LS_DEALERS="studio.dealers", LS_CLIENT="studio.clientId", LS_SEL="studio.sel";
+
+let state = { dealers:[], sel:{scope:'all'}, db:null, cache:[], accessToken:null, tokenExpiry:0, tokenClient:null, _afterAuth:null };
 
 /* ---------- toast ---------- */
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
 /* ---------- IndexedDB ---------- */
-function openDB(){
-  return new Promise((res,rej)=>{
-    const r = indexedDB.open("studioDB",1);
-    r.onupgradeneeded = e=>{ const db=e.target.result;
-      if(!db.objectStoreNames.contains("images")){ const s=db.createObjectStore("images",{keyPath:"id"}); s.createIndex("folder","folder"); } };
-    r.onsuccess = e=>res(e.target.result);
-    r.onerror = e=>rej(e.target.error);
-  });
-}
-function tx(store,mode){ return state.db.transaction(store,mode).objectStore(store); }
-function dbPut(img){ return new Promise((res,rej)=>{ const r=tx("images","readwrite").put(img); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
-function dbDelete(id){ return new Promise((res,rej)=>{ const r=tx("images","readwrite").delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
-function dbAll(){ return new Promise((res,rej)=>{ const r=tx("images","readonly").getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); }); }
-function dbGet(id){ return new Promise((res,rej)=>{ const r=tx("images","readonly").get(id); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("studioDB",2);
+  r.onupgradeneeded=e=>{const db=e.target.result; if(!db.objectStoreNames.contains("images")) db.createObjectStore("images",{keyPath:"id"});};
+  r.onsuccess=e=>res(e.target.result); r.onerror=e=>rej(e.target.error);});}
+function store(m){return state.db.transaction("images",m).objectStore("images");}
+function dbPut(x){return new Promise((res,rej)=>{const r=store("readwrite").put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+function dbDelete(id){return new Promise((res,rej)=>{const r=store("readwrite").delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+function dbAll(){return new Promise((res,rej)=>{const r=store("readonly").getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+function dbGet(id){return new Promise((res,rej)=>{const r=store("readonly").get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 
-/* ---------- folders (localStorage) ---------- */
-function loadFolders(){
-  try{ const f=JSON.parse(localStorage.getItem(LS_FOLDERS)); if(Array.isArray(f)&&f.length) return f; }catch(e){}
-  return [...DEFAULT_FOLDERS];
+/* ---------- persistence ---------- */
+function loadDealers(){try{const d=JSON.parse(localStorage.getItem(LS_DEALERS));if(Array.isArray(d))return d;}catch(e){}return [];}
+function saveDealers(){localStorage.setItem(LS_DEALERS,JSON.stringify(state.dealers));}
+function saveSel(){try{localStorage.setItem(LS_SEL,JSON.stringify(state.sel));}catch(e){}}
+function loadSel(){try{const s=JSON.parse(localStorage.getItem(LS_SEL));if(s&&s.scope)return s;}catch(e){}return {scope:'all'};}
+function dealerById(id){return state.dealers.find(d=>d.id===id);}
+function uid(){return (crypto.randomUUID?crypto.randomUUID():'id'+Date.now()+Math.random());}
+
+/* ---------- counts ---------- */
+function imgsFor(sel){
+  const c=state.cache;
+  if(sel.scope==='all') return c;
+  if(sel.scope==='unsorted') return c.filter(i=>!i.dealerId);
+  if(sel.scope==='dealer') return c.filter(i=>i.dealerId===sel.dealerId);
+  if(sel.scope==='folder') return c.filter(i=>i.dealerId===sel.dealerId && i.folder===sel.folder);
+  return c;
 }
-function saveFolders(){ localStorage.setItem(LS_FOLDERS, JSON.stringify(state.folders)); }
+function dealerCount(id){return state.cache.filter(i=>i.dealerId===id).length;}
+function folderCount(id,f){return state.cache.filter(i=>i.dealerId===id&&i.folder===f).length;}
+function unsortedCount(){return state.cache.filter(i=>!i.dealerId).length;}
 
 /* ---------- render ---------- */
-let cache = [];
-async function refresh(){ cache = await dbAll(); renderSidebar(); renderGrid(); }
+async function refresh(){state.cache=await dbAll();renderTree();renderGrid();}
 
-function countIn(folder){ return folder==="__all__" ? cache.length : cache.filter(i=>i.folder===folder).length; }
+function selEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
 
-function renderSidebar(){
-  const list=document.getElementById('folderList'); list.innerHTML="";
-  const mk=(key,label)=>{
-    const el=document.createElement('div'); el.className="folder"+(state.current===key?" active":""); el.dataset.folder=key;
-    el.innerHTML=`<svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-      <span class="nm">${label}</span><span class="count">${countIn(key)}</span>`;
-    if(key!=="__all__" && key!=="Unsorted"){
-      const m=document.createElement('span'); m.className="fmenu"; m.textContent="⋯"; m.title="Rename / delete";
-      m.onclick=(ev)=>{ ev.stopPropagation(); folderOptions(key); }; el.appendChild(m);
+function renderTree(){
+  const tree=document.getElementById('tree'); tree.innerHTML="";
+  const folderIco='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+
+  // All Banners
+  const all=document.createElement('div'); all.className="row"+(state.sel.scope==='all'?" active":"");
+  all.innerHTML=`<svg class="ico" style="width:15px;height:15px;color:var(--ink-2)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nm">All Banners</span><span class="count">${state.cache.length}</span>`;
+  all.onclick=()=>{state.sel={scope:'all'};saveSel();renderTree();renderGrid();};
+  tree.appendChild(all);
+
+  const lbl=document.createElement('div'); lbl.className="side-label"; lbl.textContent="Dealerships"; tree.appendChild(lbl);
+
+  state.dealers.forEach(d=>{
+    const head=document.createElement('div');
+    const headSel={scope:'dealer',dealerId:d.id};
+    head.className="row dealer-head"+(selEq(state.sel,headSel)?" active":"");
+    head.innerHTML=`<svg class="chev ${d.collapsed?'':'open'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="nm">${esc(d.name)}</span><span class="count">${dealerCount(d.id)}</span><span class="menu-dots" data-dmenu="${d.id}">⋯</span>`;
+    head.onclick=(e)=>{ if(e.target.dataset.dmenu) return;
+      d.collapsed=!d.collapsed; state.sel=headSel; saveDealers(); saveSel(); renderTree(); renderGrid(); };
+    // drop onto dealer head -> dealer-level (unsorted within dealer)
+    head.ondragover=e=>{e.preventDefault();head.classList.add('drop');};
+    head.ondragleave=()=>head.classList.remove('drop');
+    head.ondrop=async e=>{e.preventDefault();head.classList.remove('drop');const id=e.dataTransfer.getData('imgid');
+      if(id){const im=await dbGet(id);if(im){im.dealerId=d.id;im.folder=null;await dbPut(im);toast('Moved to '+d.name);refresh();}}};
+    head.querySelector('[data-dmenu]').onclick=(e)=>{e.stopPropagation();dealerOptions(d);};
+    tree.appendChild(head);
+
+    if(!d.collapsed){
+      d.folders.forEach(f=>{
+        const fr=document.createElement('div');
+        const fsel={scope:'folder',dealerId:d.id,folder:f};
+        fr.className="row folder-row"+(selEq(state.sel,fsel)?" active":"");
+        fr.innerHTML=`${folderIco}<span class="nm">${esc(f)}</span><span class="count">${folderCount(d.id,f)}</span><span class="menu-dots" data-fmenu="1">⋯</span>`;
+        fr.onclick=(e)=>{ if(e.target.dataset.fmenu) return; state.sel=fsel; saveSel(); renderTree(); renderGrid(); };
+        fr.ondragover=e=>{e.preventDefault();fr.classList.add('drop');};
+        fr.ondragleave=()=>fr.classList.remove('drop');
+        fr.ondrop=async e=>{e.preventDefault();fr.classList.remove('drop');const id=e.dataTransfer.getData('imgid');
+          if(id){const im=await dbGet(id);if(im){im.dealerId=d.id;im.folder=f;await dbPut(im);toast('Moved to '+f);refresh();}}};
+        fr.querySelector('[data-fmenu]').onclick=(e)=>{e.stopPropagation();folderOptions(d,f);};
+        tree.appendChild(fr);
+      });
+      const addF=document.createElement('div'); addF.className="row folder-row"; addF.style.color="var(--ink-2)";
+      addF.innerHTML=`<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="nm" style="font-size:13px">New folder</span>`;
+      addF.onclick=()=>newFolder(d); tree.appendChild(addF);
     }
-    el.onclick=()=>{ state.current=key; renderSidebar(); renderGrid(); };
-    // drag-to-folder
-    el.ondragover=e=>{ if(key!=="__all__"){ e.preventDefault(); el.classList.add('drop'); } };
-    el.ondragleave=()=>el.classList.remove('drop');
-    el.ondrop=async e=>{ e.preventDefault(); el.classList.remove('drop'); const id=e.dataTransfer.getData('imgid');
-      if(id&&key!=="__all__"){ const img=await dbGet(id); if(img){ img.folder=key; await dbPut(img); toast('Moved to '+key); refresh(); } } };
-    list.appendChild(el);
-  };
-  mk("__all__","All Banners");
-  state.folders.forEach(f=>mk(f,f));
-  if(cache.some(i=>i.folder==="Unsorted")) mk("Unsorted","Unsorted");
+  });
+
+  if(unsortedCount()>0){
+    const lbl2=document.createElement('div'); lbl2.className="side-label"; lbl2.textContent="Other"; tree.appendChild(lbl2);
+    const u=document.createElement('div'); u.className="row"+(state.sel.scope==='unsorted'?" active":"");
+    u.innerHTML=`${folderIco}<span class="nm">Unsorted</span><span class="count">${unsortedCount()}</span>`;
+    u.onclick=()=>{state.sel={scope:'unsorted'};saveSel();renderTree();renderGrid();};
+    u.ondragover=e=>{e.preventDefault();u.classList.add('drop');};
+    u.ondragleave=()=>u.classList.remove('drop');
+    u.ondrop=async e=>{e.preventDefault();u.classList.remove('drop');const id=e.dataTransfer.getData('imgid');
+      if(id){const im=await dbGet(id);if(im){im.dealerId=null;im.folder=null;await dbPut(im);toast('Moved to Unsorted');refresh();}}};
+    tree.appendChild(u);
+  }
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function currentTitle(){
+  const s=state.sel;
+  if(s.scope==='all') return 'All Banners';
+  if(s.scope==='unsorted') return 'Unsorted';
+  const d=dealerById(s.dealerId); if(!d) return 'All Banners';
+  if(s.scope==='dealer') return d.name;
+  return `<span class="crumb">${esc(d.name)} / </span>${esc(s.folder)}`;
+}
+function uploadTarget(){
+  const s=state.sel;
+  if(s.scope==='folder') return {dealerId:s.dealerId, folder:s.folder, label:`${dealerById(s.dealerId).name} / ${s.folder}`};
+  if(s.scope==='dealer') return {dealerId:s.dealerId, folder:null, label:`${dealerById(s.dealerId).name} (unsorted)`};
+  return {dealerId:null, folder:null, label:'Unsorted'};
 }
 
 function renderGrid(){
   const grid=document.getElementById('grid'), empty=document.getElementById('empty');
-  const title=document.getElementById('folderTitle'), meta=document.getElementById('folderMeta'), dzF=document.getElementById('dzFolder');
-  const label = state.current==="__all__" ? "All Banners" : state.current;
-  title.textContent=label; dzF.textContent = state.current==="__all__" ? "Unsorted" : label;
-  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
-  meta.textContent = items.length+" item"+(items.length!==1?"s":"");
-  grid.innerHTML="";
-  empty.style.display = items.length? "none":"block";
-  items.sort((a,b)=>b.createdAt-a.createdAt).forEach(img=>{
+  document.getElementById('title').innerHTML=currentTitle();
+  const items=imgsFor(state.sel);
+  document.getElementById('meta').textContent=items.length+" item"+(items.length!==1?"s":"");
+  document.getElementById('dzTarget').textContent=uploadTarget().label;
+  grid.innerHTML=""; empty.style.display=items.length?"none":"block";
+  items.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(img=>{
     const url=URL.createObjectURL(img.blob);
     const card=document.createElement('div'); card.className="card"; card.draggable=true;
-    card.ondragstart=e=>{ e.dataTransfer.setData('imgid',img.id); card.classList.add('dragging'); };
+    card.ondragstart=e=>{e.dataTransfer.setData('imgid',img.id);card.classList.add('dragging');};
     card.ondragend=()=>card.classList.remove('dragging');
-    card.innerHTML=`
-      <div class="thumb"><img src="${url}" loading="lazy"></div>
-      <div class="card-info">
-        <span class="nm" title="${img.name}">${img.name}</span>
-        ${img.driveId?'<span class="pub-badge">Drive</span>':''}
-        <div class="card-actions">
-          <button class="dots">⋯</button>
-          <div class="menu"></div>
-        </div>
-      </div>`;
+    card.innerHTML=`<div class="thumb"><img src="${url}" loading="lazy"></div>
+      <div class="card-info"><span class="nm" title="${esc(img.name)}">${esc(img.name)}</span>
+      ${img.driveId?'<span class="pub-badge">Drive</span>':''}
+      <div class="card-actions"><button class="dots">⋯</button><div class="menu"></div></div></div>`;
     const dots=card.querySelector('.dots'), menu=card.querySelector('.menu');
-    // build menu
-    let mv = '<div class="mv">Move to</div>';
-    state.folders.forEach(f=>{ if(f!==img.folder) mv+=`<button data-mv="${f}">${f}</button>`; });
-    menu.innerHTML = mv + '<div class="sep"></div>'+
-      '<button data-act="download">Download</button>'+
-      '<button data-act="rename">Rename</button>'+
-      '<button class="danger" data-act="delete">Delete</button>';
-    dots.onclick=e=>{ e.stopPropagation(); document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open')); menu.classList.toggle('open'); };
-    menu.querySelectorAll('[data-mv]').forEach(b=>b.onclick=async()=>{ img.folder=b.dataset.mv; await dbPut(img); toast('Moved to '+img.folder); refresh(); });
-    menu.querySelector('[data-act="download"]').onclick=()=>{ const a=document.createElement('a'); a.href=url; a.download=img.name; a.click(); };
-    menu.querySelector('[data-act="rename"]').onclick=async()=>{ const n=prompt("Rename banner",img.name); if(n){ img.name=n; await dbPut(img); refresh(); } };
-    menu.querySelector('[data-act="delete"]').onclick=async()=>{ if(confirm("Delete this banner?")){ await dbDelete(img.id); toast('Deleted'); refresh(); } };
+    let html='<div class="lbl">Move to</div>';
+    html+=`<button data-move='${JSON.stringify({d:null,f:null})}'>Unsorted</button>`;
+    state.dealers.forEach(d=>{ html+=`<div class="lbl">${esc(d.name)}</div>`;
+      d.folders.forEach(f=>{ html+=`<button data-move='${JSON.stringify({d:d.id,f})}'>${esc(f)}</button>`; }); });
+    html+='<div class="sep"></div><button data-act="download">Download</button><button data-act="rename">Rename</button><button class="danger" data-act="delete">Delete</button>';
+    menu.innerHTML=html;
+    dots.onclick=e=>{e.stopPropagation();document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open'));menu.classList.toggle('open');};
+    menu.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const t=JSON.parse(b.dataset.move);img.dealerId=t.d;img.folder=t.f;await dbPut(img);toast('Moved');refresh();});
+    menu.querySelector('[data-act="download"]').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=img.name;a.click();};
+    menu.querySelector('[data-act="rename"]').onclick=async()=>{const n=prompt("Rename banner",img.name);if(n){img.name=n;await dbPut(img);refresh();}};
+    menu.querySelector('[data-act="delete"]').onclick=async()=>{if(confirm("Delete this banner?")){await dbDelete(img.id);toast('Deleted');refresh();}};
     grid.appendChild(card);
   });
 }
@@ -397,203 +393,171 @@ document.addEventListener('click',()=>document.querySelectorAll('.menu.open').fo
 
 /* ---------- upload ---------- */
 async function ingest(files){
-  const folder = state.current==="__all__" ? "Unsorted" : state.current;
-  let n=0;
-  for(const file of files){
-    if(!file.type.startsWith('image/')) continue;
-    await dbPut({ id:crypto.randomUUID(), name:file.name, folder, blob:file, type:file.type, createdAt:Date.now(), driveId:null });
-    n++;
-  }
-  if(n){ toast(n+" image"+(n>1?"s":"")+" added to "+folder); refresh(); }
-  else toast("No images found in that drop");
+  const t=uploadTarget(); let n=0;
+  for(const file of files){ if(!file.type.startsWith('image/')) continue;
+    await dbPut({id:uid(),name:file.name,dealerId:t.dealerId,folder:t.folder,blob:file,type:file.type,createdAt:Date.now(),driveId:null}); n++; }
+  if(n){toast(n+" image"+(n>1?"s":"")+" added to "+t.label);refresh();} else toast("No images found");
 }
 const fileInput=document.getElementById('fileInput');
 document.getElementById('uploadBtn').onclick=()=>fileInput.click();
-fileInput.onchange=e=>{ ingest(e.target.files); fileInput.value=""; };
-
+fileInput.onchange=e=>{ingest(e.target.files);fileInput.value="";};
 const dz=document.getElementById('dropzone');
 ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hot');}));
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hot');}));
-dz.addEventListener('drop',e=>ingest(e.dataTransfer.files));
-// allow dropping anywhere on the scroll area too
-const scroll=document.querySelector('.scroll');
-scroll.addEventListener('dragover',e=>{ if(e.dataTransfer.types.includes('Files')) e.preventDefault(); });
-scroll.addEventListener('drop',e=>{ if(e.dataTransfer.files.length){ e.preventDefault(); ingest(e.dataTransfer.files); } });
+dz.addEventListener('drop',e=>{ if(e.dataTransfer.files.length) ingest(e.dataTransfer.files); });
 
-/* ---------- folder modal ---------- */
-const folderModal=document.getElementById('folderModal'), folderNameInput=document.getElementById('folderNameInput');
-let editingFolder=null;
-function openFolderModal(name){ editingFolder=name||null;
-  document.getElementById('folderModalTitle').textContent= name?"Rename folder":"New folder";
-  document.getElementById('folderSave').textContent= name?"Save":"Create";
-  folderNameInput.value=name||""; folderModal.classList.add('open'); folderNameInput.focus(); }
-document.getElementById('addFolderBtn').onclick=()=>openFolderModal();
-document.getElementById('folderCancel').onclick=()=>folderModal.classList.remove('open');
-document.getElementById('folderSave').onclick=async()=>{
-  const v=folderNameInput.value.trim(); if(!v) return;
-  if(editingFolder){
-    if(v!==editingFolder){
-      const idx=state.folders.indexOf(editingFolder); if(idx>=0) state.folders[idx]=v;
-      // move images
-      const all=await dbAll(); for(const im of all){ if(im.folder===editingFolder){ im.folder=v; await dbPut(im); } }
-      if(state.current===editingFolder) state.current=v;
-      saveFolders();
+/* ---------- generic name modal ---------- */
+const nameModal=document.getElementById('nameModal');
+let nameCb=null;
+function askName(title,label,initial,cb){
+  document.getElementById('nameTitle').textContent=title;
+  document.getElementById('nameLabel').textContent=label;
+  const inp=document.getElementById('nameInput'); inp.value=initial||"";
+  nameCb=cb; nameModal.classList.add('open'); inp.focus();
+}
+document.getElementById('nameCancel').onclick=()=>{nameModal.classList.remove('open');nameCb=null;};
+document.getElementById('nameSave').onclick=()=>{const v=document.getElementById('nameInput').value.trim();if(v&&nameCb)nameCb(v);nameModal.classList.remove('open');nameCb=null;};
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('nameSave').click();});
+
+function newFolder(d){ askName("New folder","Folder name","",(v)=>{ if(!d.folders.includes(v)){d.folders.push(v);saveDealers();refresh();} }); }
+function dealerOptions(d){
+  const ch=prompt(`Dealership "${d.name}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
+  if(!ch) return;
+  if(ch.toLowerCase().startsWith('ren')) askName("Rename dealership","Name",d.name,(v)=>{d.name=v;saveDealers();refresh();});
+  else if(ch.toLowerCase().startsWith('del')){
+    if(confirm(`Delete "${d.name}"? Its images move to Unsorted.`)){
+      dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id){im.dealerId=null;im.folder=null;await dbPut(im);}}
+        state.dealers=state.dealers.filter(x=>x.id!==d.id);saveDealers();
+        if(state.sel.dealerId===d.id)state.sel={scope:'all'};saveSel();refresh();});
     }
-  } else { if(!state.folders.includes(v)){ state.folders.push(v); saveFolders(); } }
-  folderModal.classList.remove('open'); refresh();
-};
-function folderOptions(name){
-  const choice=prompt(`Folder "${name}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
-  if(!choice) return;
-  if(choice.toLowerCase().startsWith('ren')) openFolderModal(name);
-  else if(choice.toLowerCase().startsWith('del')){
-    if(confirm(`Delete folder "${name}"? Images inside move to Unsorted.`)){
-      dbAll().then(async all=>{ for(const im of all){ if(im.folder===name){ im.folder="Unsorted"; await dbPut(im); } }
-        state.folders=state.folders.filter(f=>f!==name); saveFolders();
-        if(state.current===name) state.current="__all__"; refresh(); });
+  }
+}
+function folderOptions(d,f){
+  const ch=prompt(`Folder "${f}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
+  if(!ch) return;
+  if(ch.toLowerCase().startsWith('ren')) askName("Rename folder","Folder name",f,(v)=>{
+    const i=d.folders.indexOf(f);if(i>=0)d.folders[i]=v;
+    dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id&&im.folder===f){im.folder=v;await dbPut(im);}}
+      if(state.sel.scope==='folder'&&state.sel.dealerId===d.id&&state.sel.folder===f)state.sel.folder=v;
+      saveDealers();saveSel();refresh();});
+  });
+  else if(ch.toLowerCase().startsWith('del')){
+    if(confirm(`Delete folder "${f}"? Images inside move to this dealership's unsorted.`)){
+      dbAll().then(async all=>{for(const im of all){if(im.dealerId===d.id&&im.folder===f){im.folder=null;await dbPut(im);}}
+        d.folders=d.folders.filter(x=>x!==f);saveDealers();
+        if(state.sel.scope==='folder'&&state.sel.folder===f)state.sel={scope:'dealer',dealerId:d.id};saveSel();refresh();});
     }
   }
 }
 
+/* ---------- add dealership (brand detection) ---------- */
+function detectBrands(text){const found=[];for(const al of CAR_BRANDS){for(const a of al){const re=new RegExp('\\b'+a.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')+'\\b','i');if(re.test(text)){found.push(al[0]);break;}}}return found;}
+async function fetchOne(u,ms){const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),ms);try{const r=await fetch(u,{signal:ctrl.signal});if(!r.ok)throw new Error('status '+r.status);const txt=await r.text();if(!txt||txt.length<200)throw new Error('empty');return txt;}finally{clearTimeout(t);}}
+async function fetchSiteText(url){
+  const clean=url.replace(/^https?:\/\//i,'').replace(/\/+$/,''); const full='https://'+clean;
+  const sources=['https://api.allorigins.win/raw?url='+encodeURIComponent(full),'https://corsproxy.io/?url='+encodeURIComponent(full),'https://r.jina.ai/'+full];
+  let last; for(const s of sources){try{return await fetchOne(s,12000);}catch(e){last=e;}} throw last||new Error('failed');
+}
+function hostName(url){try{const h=url.replace(/^https?:\/\//i,'').split('/')[0].replace(/^www\./,'');return h;}catch(e){return url;}}
+
+const dealerModal=document.getElementById('dealerModal');
+document.getElementById('addDealerBtn').onclick=()=>{document.getElementById('dealerName').value='';document.getElementById('dealerUrl').value='';document.getElementById('dealerStatus').textContent='';dealerModal.classList.add('open');document.getElementById('dealerUrl').focus();};
+document.getElementById('dealerCancel').onclick=()=>dealerModal.classList.remove('open');
+document.getElementById('dealerGo').onclick=async()=>{
+  const url=document.getElementById('dealerUrl').value.trim(); if(!url) return;
+  const nm=document.getElementById('dealerName').value.trim();
+  const st=document.getElementById('dealerStatus'), go=document.getElementById('dealerGo');
+  go.disabled=true; go.textContent='Reading…'; st.innerHTML='<span class="spin"></span>Reading the site and finding brands… (up to ~15s)';
+  try{
+    const text=await fetchSiteText(url);
+    const brands=detectBrands(text);
+    const name=nm || hostName(url);
+    let d=state.dealers.find(x=>x.name.toLowerCase()===name.toLowerCase());
+    let newBrandCount=0;
+    if(!d){ d={id:uid(),name,url,collapsed:false,folders:[...CATEGORY_FOLDERS]}; state.dealers.push(d); }
+    brands.forEach(b=>{ if(!d.folders.includes(b)){d.folders.push(b);newBrandCount++;} });
+    saveDealers(); state.sel={scope:'dealer',dealerId:d.id}; d.collapsed=false; saveSel(); refresh();
+    if(brands.length){ st.innerHTML=`Detected <b>${brands.length}</b> brands: ${brands.join(', ')}. Built “${esc(name)}” with ${newBrandCount} brand folder${newBrandCount!==1?'s':''} + banner folders.`; toast('Added '+name+' ✓'); setTimeout(()=>dealerModal.classList.remove('open'),1400); }
+    else { st.textContent='No brands detected, but I created the dealership with your standard banner folders. Add brand folders with “New folder”.'; }
+  }catch(err){ console.error(err); st.textContent="Couldn't read that site (it may block readers). Check the URL, or create the dealership and add folders manually."; }
+  finally{ go.disabled=false; go.textContent='Detect & add'; }
+};
+
 /* ---------- settings ---------- */
 const settingsModal=document.getElementById('settingsModal'), clientIdInput=document.getElementById('clientIdInput');
-function openSettings(){ clientIdInput.value=localStorage.getItem(LS_CLIENT)||""; document.getElementById('originHint').textContent=location.origin; settingsModal.classList.add('open'); }
+function openSettings(){clientIdInput.value=localStorage.getItem(LS_CLIENT)||"";document.getElementById('originHint').textContent=location.origin;settingsModal.classList.add('open');}
 document.getElementById('settingsBtn').onclick=openSettings;
 document.getElementById('settingsCancel').onclick=()=>settingsModal.classList.remove('open');
-document.getElementById('settingsSave').onclick=()=>{ localStorage.setItem(LS_CLIENT, clientIdInput.value.trim()); settingsModal.classList.remove('open'); toast('Saved'); initTokenClient(); };
+document.getElementById('settingsSave').onclick=()=>{localStorage.setItem(LS_CLIENT,clientIdInput.value.trim());settingsModal.classList.remove('open');toast('Saved');initTokenClient();};
 
 /* ---------- Google auth ---------- */
-function clientId(){ return (localStorage.getItem(LS_CLIENT)||"").trim(); }
-function initTokenClient(){
-  if(!window.google || !google.accounts || !clientId()) return;
-  state.tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId(),
-    scope: 'https://www.googleapis.com/auth/drive.file',
-    callback: (resp)=>{
-      if(resp && resp.access_token){
-        state.accessToken=resp.access_token;
-        state.tokenExpiry=Date.now()+(resp.expires_in?resp.expires_in*1000:3000000);
-        setGstatus(true); toast('Google Drive connected');
-        if(state._afterAuth){ const f=state._afterAuth; state._afterAuth=null; f(); }
-      }
-    }
-  });
+function clientId(){return (localStorage.getItem(LS_CLIENT)||"").trim();}
+function initTokenClient(){ if(!window.google||!google.accounts||!clientId())return;
+  state.tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId(),scope:'https://www.googleapis.com/auth/drive.file',
+    callback:(resp)=>{ if(resp&&resp.access_token){state.accessToken=resp.access_token;state.tokenExpiry=Date.now()+(resp.expires_in?resp.expires_in*1000:3000000);setG(true);toast('Google Drive connected');if(state._afterAuth){const f=state._afterAuth;state._afterAuth=null;f();}} }});
 }
-function setGstatus(on){ document.getElementById('gdot').classList.toggle('on',on);
-  document.getElementById('gtext').textContent = on?"Drive connected":"Drive not connected";
-  document.getElementById('connectBtn').textContent = on?"Reconnect":"Connect Google"; }
-function ensureAuth(after){
-  if(!clientId()){ toast('Add your Google Client ID in Settings first'); openSettings(); return; }
-  if(!state.tokenClient) initTokenClient();
-  if(!state.tokenClient){ toast('Google sign-in still loading — try again'); return; }
-  if(state.accessToken && Date.now()<state.tokenExpiry-60000){ after&&after(); return; }
-  state._afterAuth=after; state.tokenClient.requestAccessToken({prompt: state.accessToken?'':'consent'});
-}
+function setG(on){document.getElementById('gdot').classList.toggle('on',on);document.getElementById('gtext').textContent=on?"Drive connected":"Drive not connected";document.getElementById('connectBtn').textContent=on?"Reconnect":"Connect Google";}
+function ensureAuth(after){ if(!clientId()){toast('Add your Google Client ID in Settings first');openSettings();return;}
+  if(!state.tokenClient)initTokenClient(); if(!state.tokenClient){toast('Google sign-in still loading — try again');return;}
+  if(state.accessToken&&Date.now()<state.tokenExpiry-60000){after&&after();return;}
+  state._afterAuth=after; state.tokenClient.requestAccessToken({prompt:state.accessToken?'':'consent'}); }
 document.getElementById('connectBtn').onclick=()=>ensureAuth(()=>{});
 
-/* ---------- Google Drive REST ---------- */
-async function driveFindOrCreateFolder(name,parentId){
+/* ---------- Drive REST ---------- */
+async function driveFolder(name,parentId){
   let q=`name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  if(parentId) q+=` and '${parentId}' in parents`;
-  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive',
-    {headers:{Authorization:'Bearer '+state.accessToken}});
-  const j=await r.json();
-  if(j.files&&j.files.length) return j.files[0].id;
-  const meta={name,mimeType:'application/vnd.google-apps.folder'}; if(parentId) meta.parents=[parentId];
-  const cr=await fetch('https://www.googleapis.com/drive/v3/files?fields=id',
-    {method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'application/json'},body:JSON.stringify(meta)});
+  if(parentId)q+=` and '${parentId}' in parents`;
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id)&spaces=drive',{headers:{Authorization:'Bearer '+state.accessToken}});
+  const j=await r.json(); if(j.files&&j.files.length)return j.files[0].id;
+  const meta={name,mimeType:'application/vnd.google-apps.folder'}; if(parentId)meta.parents=[parentId];
+  const cr=await fetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'application/json'},body:JSON.stringify(meta)});
   return (await cr.json()).id;
 }
 async function driveUpload(img,parentId){
-  const boundary='studio'+Date.now()+Math.random().toString(36).slice(2);
-  const meta={name:img.name,parents:[parentId]};
-  const head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+
-             '\r\n--'+boundary+'\r\nContent-Type: '+(img.type||'application/octet-stream')+'\r\n\r\n';
-  const tail='\r\n--'+boundary+'--';
-  const body=new Blob([head,img.blob,tail]);
-  const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
-    {method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
-  if(!r.ok) throw new Error('upload failed '+r.status);
-  return (await r.json()).id;
+  const b='studio'+Date.now()+Math.random().toString(36).slice(2);
+  const head='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:img.name,parents:[parentId]})+'\r\n--'+b+'\r\nContent-Type: '+(img.type||'application/octet-stream')+'\r\n\r\n';
+  const body=new Blob([head,img.blob,'\r\n--'+b+'--']);
+  const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'multipart/related; boundary='+b},body});
+  if(!r.ok)throw new Error('upload '+r.status); return (await r.json()).id;
 }
 
 /* ---------- publish ---------- */
 const publishModal=document.getElementById('publishModal');
 document.getElementById('publishBtn').onclick=()=>{
-  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
-  const unpub = items.filter(i=>!i.driveId).length;
-  document.getElementById('publishDesc').innerHTML = state.current==="__all__"
-    ? `Uploads all <b>${cache.length}</b> banners to a <b>Studio</b> folder in your Google Drive (organized by your folders). ${unpub} not yet on Drive.`
-    : `Uploads the <b>${items.length}</b> banners in <b>${state.current}</b> to Drive. ${unpub} not yet on Drive.`;
+  const items=imgsFor(state.sel); const unpub=items.filter(i=>!i.driveId).length;
+  document.getElementById('publishDesc').innerHTML=`Uploads <b>${items.length}</b> banner${items.length!==1?'s':''} from <b>${currentTitle().replace(/<[^>]+>/g,'')}</b> to a <b>Studio</b> folder in your Drive, organized by dealership → folder. ${unpub} not yet on Drive.`;
   document.getElementById('prog').classList.remove('show'); document.getElementById('progBar').style.width="0";
   publishModal.classList.add('open');
 };
 document.getElementById('publishCancel').onclick=()=>publishModal.classList.remove('open');
 document.getElementById('publishGo').onclick=()=>ensureAuth(doPublish);
-
 async function doPublish(){
-  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
-  const todo = items.filter(i=>!i.driveId);
-  if(!todo.length){ toast('Everything here is already on Drive'); publishModal.classList.remove('open'); return; }
-  const prog=document.getElementById('prog'), bar=document.getElementById('progBar');
+  const items=imgsFor(state.sel); const todo=items.filter(i=>!i.driveId);
+  if(!todo.length){toast('Everything here is already on Drive');publishModal.classList.remove('open');return;}
+  const prog=document.getElementById('prog'),bar=document.getElementById('progBar');
   prog.classList.add('show'); document.getElementById('publishGo').disabled=true;
   try{
-    const root=await driveFindOrCreateFolder("Studio",null);
-    const folderIds={};
+    const root=await driveFolder("Studio",null); const fmap={};
     let done=0;
     for(const img of todo){
-      const fname=img.folder||"Unsorted";
-      if(!folderIds[fname]) folderIds[fname]=await driveFindOrCreateFolder(fname,root);
-      const driveId=await driveUpload(img,folderIds[fname]);
+      const dName=img.dealerId?(dealerById(img.dealerId)?.name||'Unsorted'):'Unsorted';
+      const fName=img.folder||'Unsorted';
+      const dk='D:'+dName; if(!fmap[dk]) fmap[dk]=await driveFolder(dName,root);
+      const fk=dk+'/'+fName; if(!fmap[fk]) fmap[fk]=await driveFolder(fName,fmap[dk]);
+      const driveId=await driveUpload(img,fmap[fk]);
       img.driveId=driveId; img.publishedAt=Date.now(); await dbPut(img);
       done++; bar.style.width=(done/todo.length*100)+"%";
     }
-    toast('Published '+done+' to Google Drive ✓');
-    publishModal.classList.remove('open'); refresh();
-  }catch(err){
-    console.error(err); toast('Publish error — check Client ID & that Drive API is enabled');
-  }finally{ document.getElementById('publishGo').disabled=false; }
+    toast('Published '+done+' to Drive ✓'); publishModal.classList.remove('open'); refresh();
+  }catch(err){console.error(err);toast('Publish error — check Client ID & Drive API');}
+  finally{document.getElementById('publishGo').disabled=false;}
 }
-
-/* ---------- add dealership ---------- */
-const dealerModal=document.getElementById('dealerModal');
-document.getElementById('addDealerBtn').onclick=()=>{
-  document.getElementById('dealerUrl').value=''; document.getElementById('dealerStatus').textContent='';
-  dealerModal.classList.add('open'); document.getElementById('dealerUrl').focus();
-};
-document.getElementById('dealerCancel').onclick=()=>dealerModal.classList.remove('open');
-document.getElementById('dealerGo').onclick=async()=>{
-  const url=document.getElementById('dealerUrl').value.trim(); if(!url) return;
-  const st=document.getElementById('dealerStatus'), go=document.getElementById('dealerGo');
-  go.disabled=true; go.textContent='Reading…';
-  st.innerHTML='<span class="spin"></span>Reading the site and finding brands… (up to ~15s)';
-  try{
-    const text=await fetchSiteText(url);
-    const brands=detectBrands(text);
-    let addedBrands=[];
-    CATEGORY_FOLDERS.forEach(f=>{ if(!state.folders.includes(f)) state.folders.push(f); });
-    brands.forEach(b=>{ if(!state.folders.includes(b)){ state.folders.push(b); addedBrands.push(b); } });
-    saveFolders(); refresh();
-    if(brands.length){
-      st.innerHTML='Detected <b>'+brands.length+'</b> brand'+(brands.length!==1?'s':'')+': '+brands.join(', ')+
-        '. Added '+addedBrands.length+' new brand folder'+(addedBrands.length!==1?'s':'')+' + your banner folders.';
-      toast('Added '+addedBrands.length+' brand folders ✓');
-    } else {
-      st.textContent='No brands detected on that page — added your standard banner folders. You can add brand folders manually with “New folder”.';
-    }
-  }catch(err){
-    console.error(err);
-    st.textContent="Couldn't read that site (it may block readers). Check the URL, or add folders manually with “New folder”.";
-  } finally { go.disabled=false; go.textContent='Detect & add'; }
-};
 
 /* ---------- init ---------- */
 (async function(){
-  state.folders=loadFolders();
-  state.db=await openDB();
-  await refresh();
-  // GIS may load after page; poll briefly
-  let tries=0; const iv=setInterval(()=>{ if(window.google&&google.accounts){ initTokenClient(); clearInterval(iv); } if(++tries>40) clearInterval(iv); },150);
+  state.dealers=loadDealers(); state.sel=loadSel();
+  state.db=await openDB(); await refresh();
+  let tries=0; const iv=setInterval(()=>{if(window.google&&google.accounts){initTokenClient();clearInterval(iv);}if(++tries>40)clearInterval(iv);},150);
 })();
 </script>
 </body>
