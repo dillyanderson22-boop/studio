@@ -494,10 +494,14 @@ async function removeBgOne(img){
   catch(e){ console.error(e); toast('Removal failed — try again'); }
   bgStatus(null); render();
 }
+// Never strip backgrounds from the background/badge category folders — only car images.
+const REMBG_PROTECT=new Set(['Backgrounds','Sales Event Banners',...REMOVED_DEFAULTS]);
 document.getElementById('rembgBtn').onclick=()=>{
-  const items=imgsFor(state.sel).filter(i=>!i.noBg);
-  if(!items.length){ toast('Nothing here needs background removal'); return; }
-  askConfirm('Remove backgrounds', `Remove the background from ${items.length} image${items.length!==1?'s':''} in “${currentTitle().replace(/<[^>]+>/g,'')}”? This runs on your device (~2–5s each), so big folders take a while. You can keep using the app meanwhile.`, 'Remove all', ()=>runRembgBatch(items));
+  const all=imgsFor(state.sel);
+  const items=all.filter(i=>!i.noBg && !REMBG_PROTECT.has(i.folder));
+  const skipped=all.filter(i=>REMBG_PROTECT.has(i.folder)).length;
+  if(!items.length){ toast(skipped?'Protected: Remove BG only applies to car images — backgrounds & badges are left alone.':'Nothing here needs background removal'); return; }
+  askConfirm('Remove backgrounds', `Remove the background from <b>${items.length}</b> car image${items.length!==1?'s':''}${skipped?` — your ${skipped} background/badge image${skipped!==1?'s are':' is'} protected and skipped`:''}. Runs on your device (~2–5s each); you can keep working.`, 'Remove all', ()=>runRembgBatch(items));
 };
 async function runRembgBatch(items){
   let ok=0, fail=0;
@@ -527,7 +531,7 @@ const confirmModal=document.getElementById('confirmModal');
 let confirmCb=null;
 function askConfirm(title,msg,okLabel,cb){
   document.getElementById('confirmTitle').textContent=title;
-  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmMsg').innerHTML=msg;
   document.getElementById('confirmOk').textContent=okLabel||'Confirm';
   confirmCb=cb; confirmModal.classList.add('open');
 }
