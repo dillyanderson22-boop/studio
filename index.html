@@ -247,9 +247,20 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 
 /* ---------- IndexedDB ---------- */
 let dbReadyP=null;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("studioDB",1);
+function openDB(){return new Promise((res,rej)=>{
+  // open WITHOUT a fixed version so we never hit upgrade-block or downgrade errors
+  const r=indexedDB.open("studioDB");
   r.onupgradeneeded=e=>{const db=e.target.result; if(!db.objectStoreNames.contains("images")) db.createObjectStore("images",{keyPath:"id"});};
-  r.onsuccess=e=>res(e.target.result); r.onerror=e=>rej(e.target.error); r.onblocked=()=>{};});}
+  r.onsuccess=e=>{const db=e.target.result;
+    if(!db.objectStoreNames.contains("images")){
+      // store missing (older DB) -> reopen at next version to create it
+      const v=db.version+1; db.close();
+      const r2=indexedDB.open("studioDB",v);
+      r2.onupgradeneeded=ev=>{const d2=ev.target.result; if(!d2.objectStoreNames.contains("images")) d2.createObjectStore("images",{keyPath:"id"});};
+      r2.onsuccess=ev=>res(ev.target.result); r2.onerror=ev=>rej(ev.target.error); r2.onblocked=()=>{};
+    } else res(db);
+  };
+  r.onerror=e=>rej(e.target.error); r.onblocked=()=>{};});}
 function dbReady(){ if(!dbReadyP) dbReadyP=openDB(); return dbReadyP; }
 async function store(m){const db=await dbReady(); return db.transaction("images",m).objectStore("images");}
 async function dbPut(x){const s=await store("readwrite");return new Promise((res,rej)=>{const r=s.put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
