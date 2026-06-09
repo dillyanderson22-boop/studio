@@ -552,9 +552,13 @@ document.getElementById('confirmOk').onclick=()=>{const cb=confirmCb;confirmModa
 function popMenu(items,x,y){
   document.querySelectorAll('.popmenu').forEach(m=>m.remove());
   const m=document.createElement('div'); m.className='menu popmenu open';
-  m.style.position='fixed'; m.style.left=x+'px'; m.style.top=y+'px'; m.style.right='auto';
+  m.style.position='fixed'; m.style.right='auto'; m.style.left='0'; m.style.top='0'; m.style.visibility='hidden';
   items.forEach(it=>{const b=document.createElement('button');b.textContent=it.label;if(it.danger)b.className='danger';b.onclick=(e)=>{e.stopPropagation();m.remove();it.fn();};m.appendChild(b);});
   document.body.appendChild(m);
+  const w=m.offsetWidth||230, h=m.offsetHeight||80;
+  m.style.left=Math.max(8,Math.min(x, window.innerWidth-w-8))+'px';
+  m.style.top=Math.max(8,Math.min(y, window.innerHeight-h-8))+'px';
+  m.style.visibility='visible';
   setTimeout(()=>document.addEventListener('click',function h(){m.remove();document.removeEventListener('click',h);}),0);
 }
 
