@@ -496,13 +496,22 @@ async function removeBgOne(img){
 }
 // Never strip backgrounds from the background/badge category folders — only car images.
 const REMBG_PROTECT=new Set(['Backgrounds','Sales Event Banners',...REMOVED_DEFAULTS]);
-document.getElementById('rembgBtn').onclick=()=>{
-  const all=imgsFor(state.sel);
-  const items=all.filter(i=>!i.noBg && !REMBG_PROTECT.has(i.folder));
-  const skipped=all.filter(i=>REMBG_PROTECT.has(i.folder)).length;
-  if(!items.length){ toast(skipped?'Protected: Remove BG only applies to car images — backgrounds & badges are left alone.':'Nothing here needs background removal'); return; }
-  askConfirm('Remove backgrounds', `Remove the background from <b>${items.length}</b> car image${items.length!==1?'s':''}${skipped?` — your ${skipped} background/badge image${skipped!==1?'s are':' is'} protected and skipped`:''}. Runs on your device (~2–5s each); you can keep working.`, 'Remove all', ()=>runRembgBatch(items));
+// eligible = a car image that still has its background (skip protected folders + already-cut-out)
+function rembgEligible(i){ return !i.noBg && !REMBG_PROTECT.has(i.folder); }
+document.getElementById('rembgBtn').onclick=(e)=>{
+  const viewItems=imgsFor(state.sel).filter(rembgEligible);
+  const allItems=state.cache.filter(rembgEligible);
+  const doneAll=state.cache.filter(i=>i.noBg).length;
+  const here=currentTitle().replace(/<[^>]+>/g,'');
+  popMenu([
+    { label:`This view (${here}) — ${viewItems.length} left`, fn:()=>startRembg(viewItems, here) },
+    { label:`Every car, all brands — ${allItems.length} left${doneAll?` · ${doneAll} already done`:''}`, fn:()=>startRembg(allItems, 'every car') }
+  ], e.clientX||1200, e.clientY||80);
 };
+function startRembg(items, label){
+  if(!items.length){ toast('Nothing to do — those cars are already cut out (backgrounds & badges are never touched).'); return; }
+  askConfirm('Remove backgrounds', `Remove the background from <b>${items.length}</b> car${items.length!==1?'s':''} (${label})? Cars that are already cut out are skipped automatically, so this only does what's left. Runs on your device (~2–5s each) — you can keep working.`, 'Remove all', ()=>runRembgBatch(items));
+}
 async function runRembgBatch(items){
   let ok=0, fail=0;
   for(const img of items){
