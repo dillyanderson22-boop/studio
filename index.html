@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Studio — Banner Library</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#ffffff; --ink:#0a0a0a; --ink-2:#666; --line:#e6e6e6;
+    --hover:#f5f5f5; --sel:#0a0a0a; --sel-ink:#fff; --soft:#fafafa;
+    --danger:#b00020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);
+    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+    padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:#fff;color:var(--ink);transition:.12s}
+  .btn:hover{background:var(--hover)}
+  .btn.primary{background:var(--ink);color:#fff}
+  .btn.primary:hover{opacity:.85}
+  .btn.ghost{border-color:var(--line);font-weight:500}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---- TOP BAR ---- */
+  header{display:flex;align-items:center;gap:14px;padding:0 20px;height:60px;
+    border-bottom:1px solid var(--line);flex-shrink:0}
+  .logo{font-weight:800;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+  .logo .mark{width:22px;height:22px;border-radius:6px;background:var(--ink);display:inline-block}
+  .spacer{flex:1}
+  .gstatus{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+  .gdot{width:8px;height:8px;border-radius:50%;background:#ccc}
+  .gdot.on{background:#0a0a0a}
+
+  /* ---- LAYOUT ---- */
+  .body{display:flex;flex:1;min-height:0}
+  aside{width:236px;border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;overflow-y:auto}
+  .side-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:6px 10px;margin-top:8px}
+  .folder{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:14px;cursor:pointer;user-select:none}
+  .folder:hover{background:var(--hover)}
+  .folder.active{background:var(--sel);color:var(--sel-ink)}
+  .folder.active .count{color:rgba(255,255,255,.6)}
+  .folder.drop{outline:2px dashed var(--ink);outline-offset:-2px}
+  .folder .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .folder .count{font-size:12px;color:var(--ink-2)}
+  .folder .fmenu{opacity:0;font-size:16px;line-height:1;padding:0 2px}
+  .folder:hover .fmenu{opacity:.55}
+  .addf{display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:13px;color:var(--ink-2);border-radius:8px;border:1px dashed var(--line);margin-top:6px}
+  .addf:hover{background:var(--hover);color:var(--ink)}
+
+  /* ---- MAIN ---- */
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .toolbar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--line)}
+  .toolbar h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .toolbar .meta{font-size:13px;color:var(--ink-2)}
+  .scroll{flex:1;overflow-y:auto;padding:24px}
+
+  .dropzone{border:1.5px dashed var(--line);border-radius:14px;padding:40px;text-align:center;color:var(--ink-2);
+    transition:.12s;margin-bottom:24px;background:var(--soft)}
+  .dropzone.hot{border-color:var(--ink);background:#fff;color:var(--ink)}
+  .dropzone strong{color:var(--ink);font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+  .card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column;cursor:grab}
+  .card:hover{box-shadow:0 6px 20px rgba(0,0,0,.07)}
+  .card.dragging{opacity:.4}
+  .thumb{aspect-ratio:16/10;background:
+      linear-gradient(45deg,#f3f3f3 25%,transparent 25%,transparent 75%,#f3f3f3 75%) 0 0/16px 16px,
+      linear-gradient(45deg,#f3f3f3 25%,#fff 25%,#fff 75%,#f3f3f3 75%) 8px 8px/16px 16px;
+      display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .card-info{padding:10px 11px;display:flex;align-items:center;gap:8px}
+  .card-info .nm{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pub-badge{font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:5px;border:1px solid var(--ink);text-transform:uppercase}
+  .card-actions{position:relative}
+  .dots{font-size:18px;line-height:1;padding:2px 6px;border-radius:6px;color:var(--ink-2)}
+  .dots:hover{background:var(--hover)}
+  .menu{position:absolute;right:0;top:26px;background:#fff;border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);min-width:170px;z-index:20;overflow:hidden;display:none}
+  .menu.open{display:block}
+  .menu button{display:block;width:100%;text-align:left;padding:10px 13px;font-size:13px}
+  .menu button:hover{background:var(--hover)}
+  .menu .sep{height:1px;background:var(--line);margin:4px 0}
+  .menu .mv{font-size:11px;color:var(--ink-2);padding:6px 13px 2px;text-transform:uppercase;letter-spacing:.06em}
+  .menu .danger{color:var(--danger)}
+
+  .empty{text-align:center;color:var(--ink-2);padding:80px 20px}
+  .empty svg{width:40px;height:40px;opacity:.4;margin-bottom:12px}
+
+  /* ---- MODAL ---- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:460px;padding:26px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+  .modal h3{font-size:18px;font-weight:700;margin-bottom:6px}
+  .modal p{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin-bottom:16px}
+  .modal label{font-size:12px;font-weight:600;display:block;margin-bottom:6px}
+  .modal input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;margin-bottom:16px}
+  .modal input:focus{outline:none;border-color:var(--ink)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  .steps{font-size:12.5px;color:var(--ink-2);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;line-height:1.6}
+  .steps b{color:var(--ink)}
+  .steps code{background:#eee;padding:1px 5px;border-radius:4px;font-size:11.5px}
+
+  /* ---- TOAST ---- */
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 18px;border-radius:10px;
+    transition:.25s;z-index:200;pointer-events:none;max-width:90vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* progress bar in publish */
+  .prog{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:14px;display:none}
+  .prog.show{display:block}
+  .prog i{display:block;height:100%;background:var(--ink);width:0;transition:.2s}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="mark"></span>Studio</div>
+  <span class="meta" style="font-size:12px;color:var(--ink-2)">Banner Library</span>
+  <div class="spacer"></div>
+  <span class="gstatus"><span class="gdot" id="gdot"></span><span id="gtext">Drive not connected</span></span>
+  <button class="btn ghost" id="connectBtn">Connect Google</button>
+  <button class="btn ghost" id="settingsBtn" title="Settings">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="btn primary" id="publishBtn">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 19V6M5 12l7-7 7 7"/></svg>
+    Publish to Drive
+  </button>
+</header>
+
+<div class="body">
+  <aside id="sidebar">
+    <button class="btn primary" id="addDealerBtn" style="width:100%;justify-content:center;margin-bottom:10px">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 13l1.8-5.1A2 2 0 0 1 6.7 6.5h10.6a2 2 0 0 1 1.9 1.4L21 13M5 13h14v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H8v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>
+      Add dealership
+    </button>
+    <div class="side-label">Library</div>
+    <!-- folders injected here -->
+    <div id="folderList"></div>
+    <button class="addf" id="addFolderBtn">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New folder
+    </button>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <h1 id="folderTitle">All Banners</h1>
+      <span class="meta" id="folderMeta"></span>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn" id="uploadBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg> Upload
+      </button>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden />
+    </div>
+
+    <div class="scroll">
+      <div class="dropzone" id="dropzone">
+        Drag images here, or <strong>click Upload</strong>. They'll be saved into <strong id="dzFolder">this folder</strong>.
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <div>No images here yet. Drop in the banners you made in ChatGPT.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Settings modal -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Google Drive setup</h3>
+    <p>Publishing uploads your banners straight to your own Google Drive. You need a free Google OAuth <b>Client ID</b> — one-time, ~5 minutes.</p>
+    <div class="steps">
+      <b>How to get it:</b><br>
+      1. Go to <code>console.cloud.google.com</code> → create a project.<br>
+      2. APIs &amp; Services → Library → enable <b>Google Drive API</b>.<br>
+      3. APIs &amp; Services → Credentials → <b>Create OAuth client ID</b> → type <b>Web application</b>.<br>
+      4. Under <b>Authorized JavaScript origins</b> add: <code id="originHint">this site's URL</code><br>
+      5. Copy the Client ID (ends in <code>.apps.googleusercontent.com</code>) and paste below.
+    </div>
+    <label>Google OAuth Client ID</label>
+    <input id="clientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="settingsCancel">Cancel</button>
+      <button class="btn primary" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- New folder modal -->
+<div class="overlay" id="folderModal">
+  <div class="modal">
+    <h3 id="folderModalTitle">New folder</h3>
+    <label>Folder name</label>
+    <input id="folderNameInput" placeholder="e.g. GMC, Backgrounds, Sales Events" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="folderCancel">Cancel</button>
+      <button class="btn primary" id="folderSave">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish modal -->
+<div class="overlay" id="publishModal">
+  <div class="modal">
+    <h3>Publish to Google Drive</h3>
+    <p id="publishDesc">This uploads every banner in your library to a <b>Studio</b> folder in your Google Drive, keeping your folder structure.</p>
+    <div class="prog" id="prog"><i id="progBar"></i></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="publishCancel">Cancel</button>
+      <button class="btn primary" id="publishGo">Publish all</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add dealership modal -->
+<div class="overlay" id="dealerModal">
+  <div class="modal">
+    <h3>Add a dealership</h3>
+    <p>Paste the dealership's website. Studio reads it, detects every car brand they carry, and auto-creates a folder for each — plus your standard banner folders.</p>
+    <label>Dealership website URL</label>
+    <input id="dealerUrl" placeholder="https://www.lutherauto.com" />
+    <div id="dealerStatus" style="font-size:13px;color:var(--ink-2);line-height:1.5;min-height:18px;margin-bottom:14px"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="dealerCancel">Cancel</button>
+      <button class="btn primary" id="dealerGo">Detect &amp; add</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   Studio — client-side banner library + Google Drive publish
+   Storage: IndexedDB (image blobs) + localStorage (folders, settings)
+   ========================================================= */
+
+const DEFAULT_FOLDERS = ["Backgrounds", "Sales Event Banners", "Seasonal Banners", "Offer Badges"];
+const CATEGORY_FOLDERS = ["Backgrounds", "Sales Event Banners", "Seasonal Banners", "Offer Badges"];
+const CAR_BRANDS = [
+  ["Acura"],["Alfa Romeo"],["Aston Martin"],["Audi"],["Bentley"],["BMW"],["Buick"],
+  ["Cadillac"],["Chevrolet","Chevy"],["Chrysler"],["Dodge"],["Ferrari"],["Fiat"],["Ford"],
+  ["Genesis"],["GMC"],["Honda"],["Hyundai"],["INEOS"],["Infiniti"],["Jaguar"],["Jeep"],
+  ["Kia"],["Lamborghini"],["Land Rover"],["Lexus"],["Lincoln"],["Lotus"],["Maserati"],
+  ["Mazda"],["McLaren"],["Mercedes-Benz","Mercedes"],["MINI Cooper","MINI"],["Mitsubishi"],
+  ["Nissan"],["Polestar"],["Porsche"],["Ram"],["Rivian"],["Rolls-Royce"],["Subaru"],
+  ["Tesla"],["Toyota"],["Volkswagen","VW"],["Volvo"]
+];
+function detectBrands(text){
+  const found=[];
+  for(const aliases of CAR_BRANDS){
+    for(const a of aliases){
+      const re=new RegExp('\\b'+a.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')+'\\b','i');
+      if(re.test(text)){ found.push(aliases[0]); break; }
+    }
+  }
+  return found;
+}
+async function fetchSiteText(url){
+  const clean=url.replace(/^https?:\/\//i,'').replace(/\/+$/,'');
+  const r=await fetch('https://r.jina.ai/https://'+clean,{headers:{'Accept':'text/plain','X-Return-Format':'text'}});
+  if(!r.ok) throw new Error('read failed '+r.status);
+  return await r.text();
+}
+const LS_FOLDERS = "studio.folders";
+const LS_CLIENT = "studio.clientId";
+let state = { folders: [], current: "__all__", db: null, accessToken: null, tokenExpiry: 0, tokenClient: null };
+
+/* ---------- toast ---------- */
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ---------- IndexedDB ---------- */
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open("studioDB",1);
+    r.onupgradeneeded = e=>{ const db=e.target.result;
+      if(!db.objectStoreNames.contains("images")){ const s=db.createObjectStore("images",{keyPath:"id"}); s.createIndex("folder","folder"); } };
+    r.onsuccess = e=>res(e.target.result);
+    r.onerror = e=>rej(e.target.error);
+  });
+}
+function tx(store,mode){ return state.db.transaction(store,mode).objectStore(store); }
+function dbPut(img){ return new Promise((res,rej)=>{ const r=tx("images","readwrite").put(img); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function dbDelete(id){ return new Promise((res,rej)=>{ const r=tx("images","readwrite").delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function dbAll(){ return new Promise((res,rej)=>{ const r=tx("images","readonly").getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); }); }
+function dbGet(id){ return new Promise((res,rej)=>{ const r=tx("images","readonly").get(id); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+
+/* ---------- folders (localStorage) ---------- */
+function loadFolders(){
+  try{ const f=JSON.parse(localStorage.getItem(LS_FOLDERS)); if(Array.isArray(f)&&f.length) return f; }catch(e){}
+  return [...DEFAULT_FOLDERS];
+}
+function saveFolders(){ localStorage.setItem(LS_FOLDERS, JSON.stringify(state.folders)); }
+
+/* ---------- render ---------- */
+let cache = [];
+async function refresh(){ cache = await dbAll(); renderSidebar(); renderGrid(); }
+
+function countIn(folder){ return folder==="__all__" ? cache.length : cache.filter(i=>i.folder===folder).length; }
+
+function renderSidebar(){
+  const list=document.getElementById('folderList'); list.innerHTML="";
+  const mk=(key,label)=>{
+    const el=document.createElement('div'); el.className="folder"+(state.current===key?" active":""); el.dataset.folder=key;
+    el.innerHTML=`<svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <span class="nm">${label}</span><span class="count">${countIn(key)}</span>`;
+    if(key!=="__all__" && key!=="Unsorted"){
+      const m=document.createElement('span'); m.className="fmenu"; m.textContent="⋯"; m.title="Rename / delete";
+      m.onclick=(ev)=>{ ev.stopPropagation(); folderOptions(key); }; el.appendChild(m);
+    }
+    el.onclick=()=>{ state.current=key; renderSidebar(); renderGrid(); };
+    // drag-to-folder
+    el.ondragover=e=>{ if(key!=="__all__"){ e.preventDefault(); el.classList.add('drop'); } };
+    el.ondragleave=()=>el.classList.remove('drop');
+    el.ondrop=async e=>{ e.preventDefault(); el.classList.remove('drop'); const id=e.dataTransfer.getData('imgid');
+      if(id&&key!=="__all__"){ const img=await dbGet(id); if(img){ img.folder=key; await dbPut(img); toast('Moved to '+key); refresh(); } } };
+    list.appendChild(el);
+  };
+  mk("__all__","All Banners");
+  state.folders.forEach(f=>mk(f,f));
+  if(cache.some(i=>i.folder==="Unsorted")) mk("Unsorted","Unsorted");
+}
+
+function renderGrid(){
+  const grid=document.getElementById('grid'), empty=document.getElementById('empty');
+  const title=document.getElementById('folderTitle'), meta=document.getElementById('folderMeta'), dzF=document.getElementById('dzFolder');
+  const label = state.current==="__all__" ? "All Banners" : state.current;
+  title.textContent=label; dzF.textContent = state.current==="__all__" ? "Unsorted" : label;
+  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
+  meta.textContent = items.length+" item"+(items.length!==1?"s":"");
+  grid.innerHTML="";
+  empty.style.display = items.length? "none":"block";
+  items.sort((a,b)=>b.createdAt-a.createdAt).forEach(img=>{
+    const url=URL.createObjectURL(img.blob);
+    const card=document.createElement('div'); card.className="card"; card.draggable=true;
+    card.ondragstart=e=>{ e.dataTransfer.setData('imgid',img.id); card.classList.add('dragging'); };
+    card.ondragend=()=>card.classList.remove('dragging');
+    card.innerHTML=`
+      <div class="thumb"><img src="${url}" loading="lazy"></div>
+      <div class="card-info">
+        <span class="nm" title="${img.name}">${img.name}</span>
+        ${img.driveId?'<span class="pub-badge">Drive</span>':''}
+        <div class="card-actions">
+          <button class="dots">⋯</button>
+          <div class="menu"></div>
+        </div>
+      </div>`;
+    const dots=card.querySelector('.dots'), menu=card.querySelector('.menu');
+    // build menu
+    let mv = '<div class="mv">Move to</div>';
+    state.folders.forEach(f=>{ if(f!==img.folder) mv+=`<button data-mv="${f}">${f}</button>`; });
+    menu.innerHTML = mv + '<div class="sep"></div>'+
+      '<button data-act="download">Download</button>'+
+      '<button data-act="rename">Rename</button>'+
+      '<button class="danger" data-act="delete">Delete</button>';
+    dots.onclick=e=>{ e.stopPropagation(); document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open')); menu.classList.toggle('open'); };
+    menu.querySelectorAll('[data-mv]').forEach(b=>b.onclick=async()=>{ img.folder=b.dataset.mv; await dbPut(img); toast('Moved to '+img.folder); refresh(); });
+    menu.querySelector('[data-act="download"]').onclick=()=>{ const a=document.createElement('a'); a.href=url; a.download=img.name; a.click(); };
+    menu.querySelector('[data-act="rename"]').onclick=async()=>{ const n=prompt("Rename banner",img.name); if(n){ img.name=n; await dbPut(img); refresh(); } };
+    menu.querySelector('[data-act="delete"]').onclick=async()=>{ if(confirm("Delete this banner?")){ await dbDelete(img.id); toast('Deleted'); refresh(); } };
+    grid.appendChild(card);
+  });
+}
+document.addEventListener('click',()=>document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')));
+
+/* ---------- upload ---------- */
+async function ingest(files){
+  const folder = state.current==="__all__" ? "Unsorted" : state.current;
+  let n=0;
+  for(const file of files){
+    if(!file.type.startsWith('image/')) continue;
+    await dbPut({ id:crypto.randomUUID(), name:file.name, folder, blob:file, type:file.type, createdAt:Date.now(), driveId:null });
+    n++;
+  }
+  if(n){ toast(n+" image"+(n>1?"s":"")+" added to "+folder); refresh(); }
+  else toast("No images found in that drop");
+}
+const fileInput=document.getElementById('fileInput');
+document.getElementById('uploadBtn').onclick=()=>fileInput.click();
+fileInput.onchange=e=>{ ingest(e.target.files); fileInput.value=""; };
+
+const dz=document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hot');}));
+dz.addEventListener('drop',e=>ingest(e.dataTransfer.files));
+// allow dropping anywhere on the scroll area too
+const scroll=document.querySelector('.scroll');
+scroll.addEventListener('dragover',e=>{ if(e.dataTransfer.types.includes('Files')) e.preventDefault(); });
+scroll.addEventListener('drop',e=>{ if(e.dataTransfer.files.length){ e.preventDefault(); ingest(e.dataTransfer.files); } });
+
+/* ---------- folder modal ---------- */
+const folderModal=document.getElementById('folderModal'), folderNameInput=document.getElementById('folderNameInput');
+let editingFolder=null;
+function openFolderModal(name){ editingFolder=name||null;
+  document.getElementById('folderModalTitle').textContent= name?"Rename folder":"New folder";
+  document.getElementById('folderSave').textContent= name?"Save":"Create";
+  folderNameInput.value=name||""; folderModal.classList.add('open'); folderNameInput.focus(); }
+document.getElementById('addFolderBtn').onclick=()=>openFolderModal();
+document.getElementById('folderCancel').onclick=()=>folderModal.classList.remove('open');
+document.getElementById('folderSave').onclick=async()=>{
+  const v=folderNameInput.value.trim(); if(!v) return;
+  if(editingFolder){
+    if(v!==editingFolder){
+      const idx=state.folders.indexOf(editingFolder); if(idx>=0) state.folders[idx]=v;
+      // move images
+      const all=await dbAll(); for(const im of all){ if(im.folder===editingFolder){ im.folder=v; await dbPut(im); } }
+      if(state.current===editingFolder) state.current=v;
+      saveFolders();
+    }
+  } else { if(!state.folders.includes(v)){ state.folders.push(v); saveFolders(); } }
+  folderModal.classList.remove('open'); refresh();
+};
+function folderOptions(name){
+  const choice=prompt(`Folder "${name}"\n\nType: rename  /  delete  (or Cancel)`,"rename");
+  if(!choice) return;
+  if(choice.toLowerCase().startsWith('ren')) openFolderModal(name);
+  else if(choice.toLowerCase().startsWith('del')){
+    if(confirm(`Delete folder "${name}"? Images inside move to Unsorted.`)){
+      dbAll().then(async all=>{ for(const im of all){ if(im.folder===name){ im.folder="Unsorted"; await dbPut(im); } }
+        state.folders=state.folders.filter(f=>f!==name); saveFolders();
+        if(state.current===name) state.current="__all__"; refresh(); });
+    }
+  }
+}
+
+/* ---------- settings ---------- */
+const settingsModal=document.getElementById('settingsModal'), clientIdInput=document.getElementById('clientIdInput');
+function openSettings(){ clientIdInput.value=localStorage.getItem(LS_CLIENT)||""; document.getElementById('originHint').textContent=location.origin; settingsModal.classList.add('open'); }
+document.getElementById('settingsBtn').onclick=openSettings;
+document.getElementById('settingsCancel').onclick=()=>settingsModal.classList.remove('open');
+document.getElementById('settingsSave').onclick=()=>{ localStorage.setItem(LS_CLIENT, clientIdInput.value.trim()); settingsModal.classList.remove('open'); toast('Saved'); initTokenClient(); };
+
+/* ---------- Google auth ---------- */
+function clientId(){ return (localStorage.getItem(LS_CLIENT)||"").trim(); }
+function initTokenClient(){
+  if(!window.google || !google.accounts || !clientId()) return;
+  state.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId(),
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp)=>{
+      if(resp && resp.access_token){
+        state.accessToken=resp.access_token;
+        state.tokenExpiry=Date.now()+(resp.expires_in?resp.expires_in*1000:3000000);
+        setGstatus(true); toast('Google Drive connected');
+        if(state._afterAuth){ const f=state._afterAuth; state._afterAuth=null; f(); }
+      }
+    }
+  });
+}
+function setGstatus(on){ document.getElementById('gdot').classList.toggle('on',on);
+  document.getElementById('gtext').textContent = on?"Drive connected":"Drive not connected";
+  document.getElementById('connectBtn').textContent = on?"Reconnect":"Connect Google"; }
+function ensureAuth(after){
+  if(!clientId()){ toast('Add your Google Client ID in Settings first'); openSettings(); return; }
+  if(!state.tokenClient) initTokenClient();
+  if(!state.tokenClient){ toast('Google sign-in still loading — try again'); return; }
+  if(state.accessToken && Date.now()<state.tokenExpiry-60000){ after&&after(); return; }
+  state._afterAuth=after; state.tokenClient.requestAccessToken({prompt: state.accessToken?'':'consent'});
+}
+document.getElementById('connectBtn').onclick=()=>ensureAuth(()=>{});
+
+/* ---------- Google Drive REST ---------- */
+async function driveFindOrCreateFolder(name,parentId){
+  let q=`name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  if(parentId) q+=` and '${parentId}' in parents`;
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive',
+    {headers:{Authorization:'Bearer '+state.accessToken}});
+  const j=await r.json();
+  if(j.files&&j.files.length) return j.files[0].id;
+  const meta={name,mimeType:'application/vnd.google-apps.folder'}; if(parentId) meta.parents=[parentId];
+  const cr=await fetch('https://www.googleapis.com/drive/v3/files?fields=id',
+    {method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'application/json'},body:JSON.stringify(meta)});
+  return (await cr.json()).id;
+}
+async function driveUpload(img,parentId){
+  const boundary='studio'+Date.now()+Math.random().toString(36).slice(2);
+  const meta={name:img.name,parents:[parentId]};
+  const head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+
+             '\r\n--'+boundary+'\r\nContent-Type: '+(img.type||'application/octet-stream')+'\r\n\r\n';
+  const tail='\r\n--'+boundary+'--';
+  const body=new Blob([head,img.blob,tail]);
+  const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    {method:'POST',headers:{Authorization:'Bearer '+state.accessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
+  if(!r.ok) throw new Error('upload failed '+r.status);
+  return (await r.json()).id;
+}
+
+/* ---------- publish ---------- */
+const publishModal=document.getElementById('publishModal');
+document.getElementById('publishBtn').onclick=()=>{
+  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
+  const unpub = items.filter(i=>!i.driveId).length;
+  document.getElementById('publishDesc').innerHTML = state.current==="__all__"
+    ? `Uploads all <b>${cache.length}</b> banners to a <b>Studio</b> folder in your Google Drive (organized by your folders). ${unpub} not yet on Drive.`
+    : `Uploads the <b>${items.length}</b> banners in <b>${state.current}</b> to Drive. ${unpub} not yet on Drive.`;
+  document.getElementById('prog').classList.remove('show'); document.getElementById('progBar').style.width="0";
+  publishModal.classList.add('open');
+};
+document.getElementById('publishCancel').onclick=()=>publishModal.classList.remove('open');
+document.getElementById('publishGo').onclick=()=>ensureAuth(doPublish);
+
+async function doPublish(){
+  const items = state.current==="__all__" ? cache : cache.filter(i=>i.folder===state.current);
+  const todo = items.filter(i=>!i.driveId);
+  if(!todo.length){ toast('Everything here is already on Drive'); publishModal.classList.remove('open'); return; }
+  const prog=document.getElementById('prog'), bar=document.getElementById('progBar');
+  prog.classList.add('show'); document.getElementById('publishGo').disabled=true;
+  try{
+    const root=await driveFindOrCreateFolder("Studio",null);
+    const folderIds={};
+    let done=0;
+    for(const img of todo){
+      const fname=img.folder||"Unsorted";
+      if(!folderIds[fname]) folderIds[fname]=await driveFindOrCreateFolder(fname,root);
+      const driveId=await driveUpload(img,folderIds[fname]);
+      img.driveId=driveId; img.publishedAt=Date.now(); await dbPut(img);
+      done++; bar.style.width=(done/todo.length*100)+"%";
+    }
+    toast('Published '+done+' to Google Drive ✓');
+    publishModal.classList.remove('open'); refresh();
+  }catch(err){
+    console.error(err); toast('Publish error — check Client ID & that Drive API is enabled');
+  }finally{ document.getElementById('publishGo').disabled=false; }
+}
+
+/* ---------- add dealership ---------- */
+const dealerModal=document.getElementById('dealerModal');
+document.getElementById('addDealerBtn').onclick=()=>{
+  document.getElementById('dealerUrl').value=''; document.getElementById('dealerStatus').textContent='';
+  dealerModal.classList.add('open'); document.getElementById('dealerUrl').focus();
+};
+document.getElementById('dealerCancel').onclick=()=>dealerModal.classList.remove('open');
+document.getElementById('dealerGo').onclick=async()=>{
+  const url=document.getElementById('dealerUrl').value.trim(); if(!url) return;
+  const st=document.getElementById('dealerStatus'), go=document.getElementById('dealerGo');
+  go.disabled=true; st.textContent='Reading the site… (a few seconds)';
+  try{
+    const text=await fetchSiteText(url);
+    const brands=detectBrands(text);
+    let addedBrands=[];
+    CATEGORY_FOLDERS.forEach(f=>{ if(!state.folders.includes(f)) state.folders.push(f); });
+    brands.forEach(b=>{ if(!state.folders.includes(b)){ state.folders.push(b); addedBrands.push(b); } });
+    saveFolders(); refresh();
+    if(brands.length){
+      st.innerHTML='Detected <b>'+brands.length+'</b> brand'+(brands.length!==1?'s':'')+': '+brands.join(', ')+
+        '. Added '+addedBrands.length+' new brand folder'+(addedBrands.length!==1?'s':'')+' + your banner folders.';
+      toast('Added '+addedBrands.length+' brand folders ✓');
+    } else {
+      st.textContent='No brands detected on that page — added your standard banner folders. You can add brand folders manually with “New folder”.';
+    }
+  }catch(err){
+    console.error(err);
+    st.textContent="Couldn't read that site (it may block readers). Check the URL, or add folders manually.";
+  } finally { go.disabled=false; }
+};
+
+/* ---------- init ---------- */
+(async function(){
+  state.folders=loadFolders();
+  state.db=await openDB();
+  await refresh();
+  // GIS may load after page; poll briefly
+  let tries=0; const iv=setInterval(()=>{ if(window.google&&google.accounts){ initTokenClient(); clearInterval(iv); } if(++tries>40) clearInterval(iv); },150);
+})();
+</script>
+</body>
+</html>
