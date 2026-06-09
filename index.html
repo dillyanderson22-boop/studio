@@ -440,11 +440,12 @@ function renderGrid(){
       ${img.driveId?'<span class="pub-badge">Drive</span>':''}
       <div class="card-actions"><button class="dots">⋯</button><div class="menu"></div></div></div>`;
     const dots=card.querySelector('.dots'), menu=card.querySelector('.menu');
-    let html='<div class="lbl">Move to</div>';
+    // Actions first (so Delete is always visible at the top), Move-to list below.
+    let html='<button data-act="rembg">'+(img.noBg?'Re-remove background':'Remove background')+'</button><button data-act="download">Download</button><button data-act="rename">Rename</button><button class="danger" data-act="delete">Delete</button>';
+    html+='<div class="sep"></div><div class="lbl">Move to</div>';
     html+=`<button data-move='${JSON.stringify({d:null,f:null})}'>Unsorted</button>`;
     state.dealers.forEach(d=>{ html+=`<div class="lbl">${esc(d.name)}</div>`;
       d.folders.forEach(f=>{ html+=`<button data-move='${JSON.stringify({d:d.id,f})}'>${esc(f)}</button>`; }); });
-    html+='<div class="sep"></div><button data-act="rembg">'+(img.noBg?'Re-remove background':'Remove background')+'</button><button data-act="download">Download</button><button data-act="rename">Rename</button><button class="danger" data-act="delete">Delete</button>';
     menu.innerHTML=html;
     dots.onclick=e=>{e.stopPropagation();document.querySelectorAll('.menu.open').forEach(m=>m!==menu&&m.classList.remove('open'));menu.classList.toggle('open');};
     menu.querySelectorAll('[data-move]').forEach(b=>b.onclick=async()=>{const t=JSON.parse(b.dataset.move);img.dealerId=t.d;img.folder=t.f;await dbPut(img);toast('Moved');refresh();});
