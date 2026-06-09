@@ -290,7 +290,14 @@ function folderCount(id,f){return state.cache.filter(i=>i.dealerId===id&&i.folde
 function unsortedCount(){return state.cache.filter(i=>!i.dealerId).length;}
 
 /* ---------- render ---------- */
-async function refresh(){state.cache=await dbAll();renderTree();renderGrid();}
+function render(){renderTree();renderGrid();}
+async function reloadImages(){
+  try{ state.cache = await Promise.race([ dbAll(), new Promise((_,r)=>setTimeout(()=>r(new Error('db timeout')),4000)) ]); }
+  catch(e){ console.warn('image load skipped:',e.message); }
+  render();
+}
+// refresh = render the tree/grid instantly from localStorage, then refresh image data in the background.
+function refresh(){ render(); reloadImages(); }
 
 function selEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
 
@@ -569,7 +576,8 @@ async function doPublish(){
 /* ---------- init ---------- */
 (async function(){
   state.dealers=loadDealers(); state.sel=loadSel();
-  dbReady(); await refresh();
+  render();          // show dealerships/folders instantly from saved settings
+  reloadImages();    // load image thumbnails in the background (never blocks the UI)
   let tries=0; const iv=setInterval(()=>{if(window.google&&google.accounts){initTokenClient();clearInterval(iv);}if(++tries>40)clearInterval(iv);},150);
 })();
 </script>
