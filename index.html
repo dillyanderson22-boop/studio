@@ -587,6 +587,11 @@ async function doPublish(){
   let migrated=false;
   state.dealers.forEach(d=>{ const before=d.folders.length; d.folders=d.folders.filter(f=>!REMOVED_DEFAULTS.includes(f)); if(d.folders.length!==before) migrated=true; });
   if(migrated) saveDealers();
+  // sanitize remembered selection (folder/dealer may no longer exist)
+  const s=state.sel;
+  if(s.scope==='folder'){ const d=dealerById(s.dealerId); if(!d||!d.folders.includes(s.folder)) state.sel = d?{scope:'dealer',dealerId:d.id}:{scope:'all'}; }
+  else if(s.scope==='dealer' && !dealerById(s.dealerId)) state.sel={scope:'all'};
+  saveSel();
   render();          // show dealerships/folders instantly from saved settings
   reloadImages();    // load image thumbnails in the background (never blocks the UI)
   let tries=0; const iv=setInterval(()=>{if(window.google&&google.accounts){initTokenClient();clearInterval(iv);}if(++tries>40)clearInterval(iv);},150);
