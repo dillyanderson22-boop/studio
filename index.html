@@ -457,7 +457,7 @@ function renderGrid(){
     grid.appendChild(card);
   });
 }
-document.addEventListener('click',()=>document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')));
+document.addEventListener('click',(e)=>{ if(e.target&&e.target.closest&&(e.target.closest('.dots')||e.target.closest('.menu')))return; document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); });
 
 /* ---------- upload ---------- */
 async function ingest(files){
